@@ -10,7 +10,7 @@ OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CC_LIB := -I/usr/local/include
 CFLAGS := -g -Wall $(CC_LIB)
 
-LIB := -L/usr/local/lib -lSDL2
+LIB := -L/usr/local/lib -lSDL2 -framework GLUT -framework OpenGL
 INC := -I include
 
 $(TARGET): $(OBJECTS)
