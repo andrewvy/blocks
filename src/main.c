@@ -42,6 +42,9 @@ float camang[3], camloc[3] = { 60, 22, 77 };
 float player_zoom = 1.0;
 float rotate_view = 0.0;
 
+float mouse_x;
+float mouse_y;
+
 static void print_string(float x, float y, char *text, float r, float g, float b) {
   static char buffer[99999];
   int num_quads;
@@ -64,7 +67,7 @@ static void print(char *text, ...) {
   pos_y += 10;
 }
 
-static float set_text_color(int r, int g, int b) {
+void set_text_color(int r, int g, int b) {
   text_color[0] = (1.0f/255) * r;
   text_color[1] = (1.0f/255) * g;
   text_color[2] = (1.0f/255) * b;
@@ -83,7 +86,8 @@ void draw_stats() {
   print("%s (%s)", GAME_NAME, GAME_VERSION);
 
   set_text_color(0, 0, 0);
-  print("Frame time -%6.2fms, CPU frame render time -%5.2fms", frame_time*1000, render_time*1000);
+  print("Frame time %3.2fms - CPU frame render time %3.2fms", frame_time*1000, render_time*1000);
+  print("Mouse X: %3.2fpx - Mouse Y: %3.2fpx", mouse_x, mouse_y);
 }
 
 void draw_main() {
@@ -148,6 +152,8 @@ void process_tick(float dt) {
 }
 
 void process_sdl_mouse(SDL_Event *e) {
+   mouse_x = (float) e->motion.xrel;
+   mouse_y = (float) e->motion.yrel;
 }
 
 void process_event(SDL_Event *e) {
