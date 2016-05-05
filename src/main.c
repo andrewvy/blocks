@@ -12,8 +12,8 @@
 #define TICKS_PER_SECOND 60
 #define TICKRATE 60
 
-const char GAME_NAME[] = "blocks";
-const char GAME_VERSION[] = "0.0.1-dev";
+const char *GAME_NAME = "blocks";
+const char *GAME_VERSION = "0.0.1-dev";
 
 int SCREEN_WIDTH = 640 * 2;
 int SCREEN_HEIGHT = 480 * 2;

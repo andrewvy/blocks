@@ -8,7 +8,7 @@ SRCEXT := c
 SOURCES := $(shell find $(SRCDIR) -type f -name *.$(SRCEXT))
 OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CC_LIB := -I/usr/local/include
-CFLAGS := -g -Wall $(CC_LIB)
+CFLAGS := -g $(CC_LIB)
 
 LIB := -L/usr/local/lib -lSDL2 -framework GLUT -framework OpenGL
 INC := -I include
