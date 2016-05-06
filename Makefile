@@ -10,7 +10,7 @@ OBJECTS := $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.o))
 CC_LIB := -I/usr/local/include
 CFLAGS := -g $(CC_LIB)
 
-LIB := -L/usr/local/lib -lSDL2 -framework GLUT -framework OpenGL
+LIB := -L/usr/local/lib -lglfw3 -lGLEW -framework OpenGL -framework Cocoa -framework CoreVideo -framework IOKit
 INC := -I include
 
 $(TARGET): $(OBJECTS)

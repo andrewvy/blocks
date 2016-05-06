@@ -1,54 +1,35 @@
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 
-#include <SDL2/SDL.h>
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
+#include "modern.h"
 #include "stb/stb_easy_font.h"
 
-#define TICKS_PER_SECOND 60
-#define TICKRATE 60
+GLFWwindow *window;
 
-const char *GAME_NAME = "blocks";
-const char *GAME_VERSION = "0.0.1-dev";
-
-int SCREEN_WIDTH = 640 * 2;
-int SCREEN_HEIGHT = 480 * 2;
-
-static bool quit = false;
-static bool initialized = false;
-static SDL_Window *window;
-static SDL_GLContext *context;
-
-float carried_dt = 0;
-float global_timer;
-
-float render_time;
-static uint64_t start_time, end_time;
-
-void error(char *s) {
-  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", s, NULL);
-  exit(0);
-}
+static GLfloat g_vertex_buffer_data[1000] = {
+  -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+   1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+   0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+};
 
 static float text_color[3] = { 1.0f, 1.0f, 1.0f };
 static float pos_x = 10;
 static float pos_y = 10;
 
-float mouse_x;
-float mouse_y;
-
 static void print_string(float x, float y, char *text, float r, float g, float b) {
-  static char buffer[99999];
   int num_quads;
-  num_quads = stb_easy_font_print(x, y, text, NULL, buffer, sizeof(buffer));
+  num_quads = stb_easy_font_print(x, y, text, NULL, g_vertex_buffer_data, sizeof(g_vertex_buffer_data));
 
-  glColor3f(r, g, b);
   glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(2, GL_FLOAT, 16, buffer);
+  glVertexPointer(2, GL_FLOAT, 16, g_vertex_buffer_data + 16);
   glDrawArrays(GL_QUADS, 0, num_quads * 4);
   glDisableClientState(GL_VERTEX_ARRAY);
 }
@@ -63,190 +44,130 @@ static void print(char *text, ...) {
   pos_y += 10;
 }
 
-void set_text_color(int r, int g, int b) {
-  text_color[0] = (1.0f/255) * r;
-  text_color[1] = (1.0f/255) * g;
-  text_color[2] = (1.0f/255) * b;
-}
+// Checks for OpenGL errors
+void check_opengl_error() {
+  GLenum err;
+  char* err_s;
 
-void draw_stats() {
-  static uint64_t last_frame_time;
-  uint64_t cur_time = SDL_GetPerformanceCounter();
-  float frame_time = (cur_time - last_frame_time) / (float) SDL_GetPerformanceFrequency();
-  last_frame_time = cur_time;
-
-  stb_easy_font_spacing(-0.75);
-  pos_y = 10;
-
-  set_text_color(0, 84, 111);
-  print("%s (%s)", GAME_NAME, GAME_VERSION);
-
-  set_text_color(0, 0, 0);
-  print("Frame time %3.2fms - CPU frame render time %3.2fms", frame_time*1000, render_time*1000);
-  print("Mouse X: %3.2fpx - Mouse Y: %3.2fpx", mouse_x, mouse_y);
-}
-
-float square_x = 0;
-float square_y = 0;
-float cube_width = 100;
-
-void draw_main() {
-
-  start_time = SDL_GetPerformanceCounter();
-
-  glClear( GL_COLOR_BUFFER_BIT );
-
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity();
-
-  glBegin(GL_QUADS);
-  glColor3f(0.0f, 1.0f, 1.0f);
-  glVertex2f(square_x, square_y);
-  glVertex2f(square_x + cube_width, square_y);
-  glVertex2f(square_x + cube_width, square_y + cube_width);
-  glVertex2f(square_x, square_y + cube_width);
-  glEnd();
-
-  end_time = SDL_GetPerformanceCounter();
-
-  render_time = (end_time - start_time) / (float) SDL_GetPerformanceFrequency();
-
-  draw_stats();
-}
-
-void process_tick(float dt) {
-}
-
-void process_sdl_mouse(SDL_Event *e) {
-   mouse_x = (float) e->motion.xrel / SCREEN_WIDTH/2;
-   mouse_y = (float) e->motion.yrel / SCREEN_HEIGHT/2;
-}
-
-void process_event(SDL_Event *e) {
-  switch (e->type) {
-    case SDL_MOUSEMOTION:
-      process_sdl_mouse(e);
-      break;
-    case SDL_QUIT:
-      quit = 1;
-      break;
-    case SDL_KEYDOWN: {
-      int k = e->key.keysym.sym;
-      int s = e->key.keysym.scancode;
-
-      if (k == SDLK_ESCAPE) quit = 1;
-      if (s == SDL_SCANCODE_D) square_x++;
-      if (s == SDL_SCANCODE_A) square_x--;
-      if (s == SDL_SCANCODE_W) square_y--;
-      if (s == SDL_SCANCODE_S) square_y++;
-
-      break;
-    }
-  }
-}
-
-void draw() {
-  draw_main();
-  SDL_GL_SwapWindow(window);
-}
-
-static float getTimestep(float minimum_time) {
-  float elapsedTime;
-  double thisTime;
-  static double lastTime = -1;
-
-  if (lastTime == -1)
-    lastTime = SDL_GetTicks() / 1000.0 - minimum_time;
-
-  for (;;) {
-    thisTime = SDL_GetTicks() / 1000.0;
-    elapsedTime = (float) (thisTime - lastTime);
-
-    if (elapsedTime >= minimum_time) {
-      lastTime = thisTime;
-      return elapsedTime;
+  while ((err  = glGetError()) != GL_NO_ERROR) {
+    switch(err) {
+      case GL_INVALID_OPERATION:
+        err_s = "INVALID_OPERATION";
+        break;
+      case GL_INVALID_ENUM:
+        err_s = "INVALID_ENUM";
+        break;
+      case GL_INVALID_VALUE:
+        err_s = "INVALID_VALUE";
+        break;
+      case GL_OUT_OF_MEMORY:
+        err_s = "OUT_OF_MEMORY";
+        break;
     }
 
-    SDL_Delay(1);
+    printf("OpenGL error: %s\n", err_s);
   }
 }
 
-int loopmode(float dt, int real) {
-  if (!initialized) return 0;
-  if (!real) return 0;
+int main(void) {
+	// Initialise GLFW
+	if( !glfwInit() )
+	{
+		printf("Failed to initialize GLFW\n" );
+		return -1;
+	}
 
-  // Cap at max 6 frames update
-  if (dt > 0.075) dt = 0.075;
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-  global_timer += dt;
-  carried_dt += dt;
+	// Open a window and create its OpenGL context
+	window = glfwCreateWindow( 1024, 768, "Modern OpenGL", NULL, NULL);
+	if( window == NULL ){
+		printf("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+		glfwTerminate();
+		return -1;
+	}
 
-  while (carried_dt > 1.0/TICKRATE) {
-    carried_dt -= 1.0/TICKRATE;
-  }
+	glfwMakeContextCurrent(window);
 
-  process_tick(dt);
-  draw();
+	// Initialize GLEW
+	glewExperimental = GL_TRUE; // Needed for core profile
+	if (glewInit() != GLEW_OK) {
+		printf("Failed to initialize GLEW\n");
+		return -1;
+	}
 
-  return 0;
-}
+	// Ensure we can capture the escape key being pressed below
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-int SDL_main(int argc, char **argv) {
-  SDL_Init(SDL_INIT_VIDEO);
+	// Dark blue background
+	glClearColor(0.1f, 0.1f, 0.5f, 0.0f);
 
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE  , 8);
-  SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE , 8);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	GLuint VertexArrayID;
+	glGenVertexArrays(1, &VertexArrayID);
+	glBindVertexArray(VertexArrayID);
 
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-  SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
+	// Create and compile our GLSL program from the shaders
+  GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "vertex.sl");
+  GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "fragment.sl");
+  GLuint programID = make_program(vertex_shader, fragment_shader);
 
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-  window = SDL_CreateWindow(
-    "blocks",
-    SDL_WINDOWPOS_UNDEFINED,
-    SDL_WINDOWPOS_UNDEFINED,
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT,
-    SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-  );
+	while (!glfwWindowShouldClose(window)) {
+		// Clear the screen
+		glClear( GL_COLOR_BUFFER_BIT );
 
-  if (!window) error("Couldn't create window");
+		// Use our shader
+		glUseProgram(programID);
 
-  context = SDL_GL_CreateContext(window);
-  if (!context) error("Couldn't create context");
+		// 1rst attribute buffer : vertices
+		glEnableVertexAttribArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 
-  SDL_GL_MakeCurrent(window, context);
-  SDL_SetRelativeMouseMode(SDL_TRUE);
-  SDL_GL_SetSwapInterval(1);
+		glVertexAttribPointer(
+			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			4,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			6 * sizeof(GLfloat),                  // stride
+			(GLvoid *) 0  // array buffer offset
+		);
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glOrtho(0.0, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0, 1.0, -1.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glClearColor(0.6f, 0.7f, 0.9f, 0.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(
+			1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+			3,                  // size
+			GL_FLOAT,           // type
+			GL_FALSE,           // normalized?
+			6 * sizeof(GLfloat),                  // stride
+			(GLvoid *) (3 * sizeof(GLfloat))  // array buffer offset
+    );
 
-  initialized = true;
+		// Draw the triangle !
+		glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
 
-  while (!quit) {
-    SDL_Event e;
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
 
-    while (SDL_PollEvent(&e)) {
-      process_event(&e);
-    }
+		// Swap buffers
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
 
-    loopmode(getTimestep(0.0166f/8), 1);
-  }
+  check_opengl_error();
+	glDeleteBuffers(1, &vertexbuffer);
+	glDeleteVertexArrays(1, &VertexArrayID);
+	glDeleteProgram(programID);
 
-  return 0;
-}
+	// Close OpenGL window and terminate GLFW
+	glfwTerminate();
 
-int main(int argc, char *argv[]) {
-  SDL_main(argc, argv);
+	return 0;
 }
