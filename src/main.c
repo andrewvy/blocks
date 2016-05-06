@@ -10,28 +10,28 @@
 #include <GLFW/glfw3.h>
 
 #include "modern.h"
-#include "stb/stb_easy_font.h"
 
 GLFWwindow *window;
 
 static GLfloat g_vertex_buffer_data[1000] = {
   -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
    1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-   0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+   0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+
+  -0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f,
+   0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 1.0f,
+   0.0f,  0.5f, 0.0f, 1.0f, 1.0f, 1.0f
 };
 
 static float text_color[3] = { 1.0f, 1.0f, 1.0f };
 static float pos_x = 10;
 static float pos_y = 10;
 
-static void print_string(float x, float y, char *text, float r, float g, float b) {
-  int num_quads;
-  num_quads = stb_easy_font_print(x, y, text, NULL, g_vertex_buffer_data, sizeof(g_vertex_buffer_data));
+GLuint VertexArrayID;
+GLuint vertexbuffer;
+GLuint program;
 
-  glEnableClientState(GL_VERTEX_ARRAY);
-  glVertexPointer(2, GL_FLOAT, 16, g_vertex_buffer_data + 16);
-  glDrawArrays(GL_QUADS, 0, num_quads * 4);
-  glDisableClientState(GL_VERTEX_ARRAY);
+static void print_string(float x, float y, char *text, float r, float g, float b) {
 }
 
 static void print(char *text, ...) {
@@ -69,11 +69,10 @@ void check_opengl_error() {
   }
 }
 
-int main(void) {
-	// Initialise GLFW
-	if( !glfwInit() )
-	{
-		printf("Failed to initialize GLFW\n" );
+
+int video_init() {
+	if(!glfwInit()) {
+		printf("Failed to initialize GLFW\n");
 		return -1;
 	}
 
@@ -84,8 +83,9 @@ int main(void) {
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	// Open a window and create its OpenGL context
-	window = glfwCreateWindow( 1024, 768, "Modern OpenGL", NULL, NULL);
-	if( window == NULL ){
+	window = glfwCreateWindow(1024, 768, "Modern OpenGL", NULL, NULL);
+
+	if (window == NULL) {
 		printf("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
 		glfwTerminate();
 		return -1;
@@ -93,81 +93,105 @@ int main(void) {
 
 	glfwMakeContextCurrent(window);
 
-	// Initialize GLEW
-	glewExperimental = GL_TRUE; // Needed for core profile
+	// Initialize GLEW (Needed for core profile)
+	glewExperimental = GL_TRUE;
+
 	if (glewInit() != GLEW_OK) {
 		printf("Failed to initialize GLEW\n");
 		return -1;
 	}
 
+  return 0;
+}
+
+int render_init() {
 	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
 	// Dark blue background
-	glClearColor(0.1f, 0.1f, 0.5f, 0.0f);
+	glClearColor(0.45f, 0.45f, 0.8f, 1.0f);
 
-	GLuint VertexArrayID;
 	glGenVertexArrays(1, &VertexArrayID);
 	glBindVertexArray(VertexArrayID);
 
 	// Create and compile our GLSL program from the shaders
   GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "vertex.sl");
   GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "fragment.sl");
-  GLuint programID = make_program(vertex_shader, fragment_shader);
+  program = make_program(vertex_shader, fragment_shader);
 
-	GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-	while (!glfwWindowShouldClose(window)) {
-		// Clear the screen
-		glClear( GL_COLOR_BUFFER_BIT );
+  return 0;
+}
 
-		// Use our shader
-		glUseProgram(programID);
+void render() {
+  // Clear the screen
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// 1rst attribute buffer : vertices
-		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+  glDepthFunc(GL_LESS);
+  glClearDepth(1);
 
-		glVertexAttribPointer(
-			0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			4,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			6 * sizeof(GLfloat),                  // stride
-			(GLvoid *) 0  // array buffer offset
-		);
+  // Use our shader
+  glUseProgram(program);
 
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(
-			1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-			3,                  // size
-			GL_FLOAT,           // type
-			GL_FALSE,           // normalized?
-			6 * sizeof(GLfloat),                  // stride
-			(GLvoid *) (3 * sizeof(GLfloat))  // array buffer offset
-    );
+  // 1rst attribute buffer : vertices
+  glEnableVertexAttribArray(0);
+  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 
-		// Draw the triangle !
-		glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+  glVertexAttribPointer(
+    0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+    4,                  // size
+    GL_FLOAT,           // type
+    GL_FALSE,           // normalized?
+    6 * sizeof(GLfloat),                  // stride
+    (GLvoid *) 0  // array buffer offset
+  );
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(
+    1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+    3,                  // size
+    GL_FLOAT,           // type
+    GL_FALSE,           // normalized?
+    6 * sizeof(GLfloat),                  // stride
+    (GLvoid *) (3 * sizeof(GLfloat))  // array buffer offset
+  );
 
-		// Swap buffers
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
+  // Draw the triangle !
+  glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+  glDrawArrays(GL_TRIANGLES, 3, 3); // 3 indices starting at 0 -> 1 triangle
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
 
+  // Swap buffers
+  glfwSwapBuffers(window);
+  glfwPollEvents();
+}
+
+void render_quit() {
+  // Check for OpenGL Errors on exit
+  // and print to screen.
   check_opengl_error();
+
 	glDeleteBuffers(1, &vertexbuffer);
 	glDeleteVertexArrays(1, &VertexArrayID);
-	glDeleteProgram(programID);
+	glDeleteProgram(program);
 
 	// Close OpenGL window and terminate GLFW
 	glfwTerminate();
+}
+
+int main(void) {
+	// Initialise GLFW
+
+  if (video_init() == -1) return -1;
+  if (render_init() == -1) return -1;
+
+	while (!glfwWindowShouldClose(window)) {
+    render();
+	}
 
 	return 0;
 }
