@@ -38,10 +38,6 @@ static float text_color[3] = { 1.0f, 1.0f, 1.0f };
 static float pos_x = 10;
 static float pos_y = 10;
 
-float camang[3], camloc[3] = { 60, 22, 77 };
-float player_zoom = 1.0;
-float rotate_view = 0.0;
-
 float mouse_x;
 float mouse_y;
 
@@ -90,60 +86,30 @@ void draw_stats() {
   print("Mouse X: %3.2fpx - Mouse Y: %3.2fpx", mouse_x, mouse_y);
 }
 
+float square_x = 0;
+float square_y = 0;
+float cube_width = 100;
+
 void draw_main() {
-  glEnable(GL_CULL_FACE);
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_LIGHTING);
-  glEnable(GL_DEPTH_TEST);
-
-#ifdef REVERSE_DEPTH
-  glDepthFunc(GL_GREATER);
-  glClearDepth(0);
-#else
-  glDepthFunc(GL_LESS);
-  glClearDepth(1);
-#endif
-  glDepthMask(GL_TRUE);
-  glDisable(GL_SCISSOR_TEST);
-  glClearColor(0.6f, 0.7f, 0.9f, 0.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glColor3f(1, 1, 1);
-  glFrontFace(GL_CW);
-  glEnable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-#ifdef REVERSE_DEPTH
-  // stbgl_Perspective(player_zoom, 90, 70, 3000, 1.0/16);
-#else
-  // stbgl_Perspective(player_zoom, 90, 70, 1.0/16, 3000);
-#endif
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  // stbgl_initCamera_zup_facing_y();
-
-  glRotatef(-camang[0], 1, 0, 0);
-  glRotatef(-camang[2], 0, 0, 1);
-  glTranslatef(-camloc[0], -camloc[1], -camloc[2]);
 
   start_time = SDL_GetPerformanceCounter();
+
+  glClear( GL_COLOR_BUFFER_BIT );
+
+  glMatrixMode( GL_MODELVIEW );
+  glLoadIdentity();
+
+  glBegin(GL_QUADS);
+  glColor3f(0.0f, 1.0f, 1.0f);
+  glVertex2f(square_x, square_y);
+  glVertex2f(square_x + cube_width, square_y);
+  glVertex2f(square_x + cube_width, square_y + cube_width);
+  glVertex2f(square_x, square_y + cube_width);
+  glEnd();
+
   end_time = SDL_GetPerformanceCounter();
 
   render_time = (end_time - start_time) / (float) SDL_GetPerformanceFrequency();
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluOrtho2D(0, SCREEN_WIDTH/2, SCREEN_HEIGHT/2, 0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_BLEND);
-  glDisable(GL_CULL_FACE);
 
   draw_stats();
 }
@@ -152,8 +118,8 @@ void process_tick(float dt) {
 }
 
 void process_sdl_mouse(SDL_Event *e) {
-   mouse_x = (float) e->motion.xrel;
-   mouse_y = (float) e->motion.yrel;
+   mouse_x = (float) e->motion.xrel / SCREEN_WIDTH/2;
+   mouse_y = (float) e->motion.yrel / SCREEN_HEIGHT/2;
 }
 
 void process_event(SDL_Event *e) {
@@ -164,9 +130,18 @@ void process_event(SDL_Event *e) {
     case SDL_QUIT:
       quit = 1;
       break;
-    case SDL_KEYDOWN:
-      quit = 1;
+    case SDL_KEYDOWN: {
+      int k = e->key.keysym.sym;
+      int s = e->key.keysym.scancode;
+
+      if (k == SDLK_ESCAPE) quit = 1;
+      if (s == SDL_SCANCODE_D) square_x++;
+      if (s == SDL_SCANCODE_A) square_x--;
+      if (s == SDL_SCANCODE_W) square_y--;
+      if (s == SDL_SCANCODE_S) square_y++;
+
       break;
+    }
   }
 }
 
@@ -248,6 +223,14 @@ int SDL_main(int argc, char **argv) {
   SDL_GL_MakeCurrent(window, context);
   SDL_SetRelativeMouseMode(SDL_TRUE);
   SDL_GL_SetSwapInterval(1);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(0.0, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0, 1.0, -1.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glClearColor(0.6f, 0.7f, 0.9f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   initialized = true;
 
