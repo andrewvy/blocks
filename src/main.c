@@ -109,6 +109,9 @@ int render_init() {
   GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "fragment.sl");
   program = make_program(vertex_shader, fragment_shader);
 
+  // Use our shaders
+  glUseProgram(program);
+
   vertexbuffer = make_buffer(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangle->vertex_count, triangle->buffer);
 
   // Reset matrices to identity
@@ -125,11 +128,6 @@ void render() {
   // Clear the screen
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // Use our shader
-  glUseProgram(program);
-
-  glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
-
   // Apply rotation on the model
   rotateX(&Model, 0.02);
 
@@ -142,6 +140,9 @@ void render() {
 
   GLint projection = glGetUniformLocation(program, "Projection");
   glUniformMatrix4fv(projection, 1, GL_FALSE, &(Projection.m[0]));
+
+  // Add timer
+  glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
 
   // 1st attribute buffer : vertices
   glEnableVertexAttribArray(0);
