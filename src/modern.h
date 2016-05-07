@@ -1,3 +1,5 @@
+#pragma once
+
 #include <GLFW/glfw3.h>
 
 #define PI 3.14159265359
