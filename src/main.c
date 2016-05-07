@@ -14,32 +14,9 @@
 
 GLFWwindow *window;
 
-static GLfloat g_vertex_buffer_data[1000] = {
-  -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-   1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-   0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f
-};
-
-static float text_color[3] = { 1.0f, 1.0f, 1.0f };
-static float pos_x = 10;
-static float pos_y = 10;
-
 GLuint VertexArrayID;
 GLuint vertexbuffer;
 GLuint program;
-
-static void print_string(float x, float y, char *text, float r, float g, float b) {
-}
-
-static void print(char *text, ...) {
-  char buffer[999];
-  va_list va;
-  va_start(va, text);
-  vsprintf(buffer, text, va);
-  va_end(va);
-  print_string(pos_x, pos_y, buffer, text_color[0], text_color[1], text_color[2]);
-  pos_y += 10;
-}
 
 // Checks for OpenGL errors
 void check_opengl_error() {
@@ -100,6 +77,8 @@ int video_init() {
   return 0;
 }
 
+vbo_mesh *triangle;
+
 int render_init() {
   // Ensure we can capture the escape key being pressed below
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -110,12 +89,20 @@ int render_init() {
   glGenVertexArrays(1, &VertexArrayID);
   glBindVertexArray(VertexArrayID);
 
+  GLfloat triangle_data[] = {
+    -1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+    1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f,  1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+  };
+
+  triangle = create_vbo_mesh(triangle_data, 6 * 3);
+
   // Create and compile our GLSL program from the shaders
   GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "vertex.sl");
   GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "fragment.sl");
   program = make_program(vertex_shader, fragment_shader);
 
-  vertexbuffer = make_buffer(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data);
+  vertexbuffer = make_buffer(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangle->vertex_count, triangle->buffer);
 
   return 0;
 }
@@ -186,6 +173,7 @@ void render_quit() {
   glDeleteBuffers(1, &vertexbuffer);
   glDeleteVertexArrays(1, &VertexArrayID);
   glDeleteProgram(program);
+  destroy_vbo_mesh(triangle);
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();
