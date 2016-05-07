@@ -29,10 +29,10 @@ static const vec4_t INV_Y_AXIS = {{0, -1, 0, 0}};
 static const vec4_t INV_Z_AXIS = {{0, 0, -1, 0}};
 
 static const mat4_t IDENTITY_MATRIX = {{
-	1, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 1, 0,
-	0, 0, 0, 1
+	1.0f, 0.0f, 0.0f, 0.0f,
+	0.0f, 1.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 1.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 1.0f
 }};
 
 mat4_t multiplymat4(const mat4_t* m1, const mat4_t* m2);

@@ -10,6 +10,6 @@ uniform mat4 Projection;
 out vec3 fColor;
 
 void main() {
-  gl_Position = position;
+  gl_Position = Projection * View * Model * position;
   fColor = vColor;
 }

@@ -67,6 +67,8 @@ int video_init() {
 
   glfwMakeContextCurrent(window);
 
+  printf("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+
   // Initialize GLEW (Needed for core profile)
   glewExperimental = GL_TRUE;
 
@@ -79,6 +81,10 @@ int video_init() {
 }
 
 vbo_mesh *triangle;
+
+static mat4_t Model;
+static mat4_t View;
+static mat4_t Projection;
 
 int render_init() {
   // Ensure we can capture the escape key being pressed below
@@ -105,17 +111,10 @@ int render_init() {
 
   vertexbuffer = make_buffer(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangle->vertex_count, triangle->buffer);
 
-  mat4_t Model = IDENTITY_MATRIX;
-  mat4_t View = IDENTITY_MATRIX;
-  mat4_t Projection = IDENTITY_MATRIX;
-
-  // Load matrices
-  GLint model = glGetUniformLocation(program, "Model");
-  glUniformMatrix4fv(model, 1, GL_FALSE, Model.m);
-  GLint view = glGetUniformLocation(program, "View");
-  glUniformMatrix4fv(model, 1, GL_FALSE, View.m);
-  GLint projection = glGetUniformLocation(program, "Projection");
-  glUniformMatrix4fv(model, 1, GL_FALSE, Projection.m);
+  // Reset matrices to identity
+  Model = IDENTITY_MATRIX;
+  View = IDENTITY_MATRIX;
+  Projection = IDENTITY_MATRIX;
 
   check_opengl_error();
 
@@ -131,7 +130,20 @@ void render() {
 
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
 
-  // 1rst attribute buffer : vertices
+  // Apply rotation on the model
+  rotateX(&Model, 0.02);
+
+  // Load matrices
+  GLint model = glGetUniformLocation(program, "Model");
+  glUniformMatrix4fv(model, 1, GL_TRUE, &(Model.m[0]));
+
+  GLint view = glGetUniformLocation(program, "View");
+  glUniformMatrix4fv(view, 1, GL_FALSE, &(View.m[0]));
+
+  GLint projection = glGetUniformLocation(program, "Projection");
+  glUniformMatrix4fv(projection, 1, GL_FALSE, &(Projection.m[0]));
+
+  // 1st attribute buffer : vertices
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 
