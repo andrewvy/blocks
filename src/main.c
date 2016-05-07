@@ -67,50 +67,50 @@ void check_opengl_error() {
 }
 
 int video_init() {
-	if(!glfwInit()) {
-		printf("Failed to initialize GLFW\n");
-		return -1;
-	}
+  if(!glfwInit()) {
+    printf("Failed to initialize GLFW\n");
+    return -1;
+  }
 
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+  glfwWindowHint(GLFW_SAMPLES, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-	// Open a window and create its OpenGL context
-	window = glfwCreateWindow(1024, 768, "Modern OpenGL", NULL, NULL);
+  // Open a window and create its OpenGL context
+  window = glfwCreateWindow(1024, 768, "Modern OpenGL", NULL, NULL);
 
-	if (window == NULL) {
-		printf("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
-		glfwTerminate();
-		return -1;
-	}
+  if (window == NULL) {
+    printf("Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n" );
+    glfwTerminate();
+    return -1;
+  }
 
-	glfwMakeContextCurrent(window);
+  glfwMakeContextCurrent(window);
 
-	// Initialize GLEW (Needed for core profile)
-	glewExperimental = GL_TRUE;
+  // Initialize GLEW (Needed for core profile)
+  glewExperimental = GL_TRUE;
 
-	if (glewInit() != GLEW_OK) {
-		printf("Failed to initialize GLEW\n");
-		return -1;
-	}
+  if (glewInit() != GLEW_OK) {
+    printf("Failed to initialize GLEW\n");
+    return -1;
+  }
 
   return 0;
 }
 
 int render_init() {
-	// Ensure we can capture the escape key being pressed below
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+  // Ensure we can capture the escape key being pressed below
+  glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
 
-	// Dark blue background
-	glClearColor(0.45f, 0.45f, 0.8f, 1.0f);
+  // Dark blue background
+  glClearColor(0.45f, 0.45f, 0.8f, 1.0f);
 
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
+  glGenVertexArrays(1, &VertexArrayID);
+  glBindVertexArray(VertexArrayID);
 
-	// Create and compile our GLSL program from the shaders
+  // Create and compile our GLSL program from the shaders
   GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "vertex.sl");
   GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "fragment.sl");
   program = make_program(vertex_shader, fragment_shader);
@@ -183,23 +183,23 @@ void render_quit() {
   // and print to screen.
   check_opengl_error();
 
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteVertexArrays(1, &VertexArrayID);
-	glDeleteProgram(program);
+  glDeleteBuffers(1, &vertexbuffer);
+  glDeleteVertexArrays(1, &VertexArrayID);
+  glDeleteProgram(program);
 
-	// Close OpenGL window and terminate GLFW
-	glfwTerminate();
+  // Close OpenGL window and terminate GLFW
+  glfwTerminate();
 }
 
 int main(void) {
-	// Initialise GLFW
+  // Initialise GLFW
 
   if (video_init() == -1) return -1;
   if (render_init() == -1) return -1;
 
-	while (!glfwWindowShouldClose(window)) {
+  while (!glfwWindowShouldClose(window)) {
     render();
-	}
+  }
 
-	return 0;
+  return 0;
 }
