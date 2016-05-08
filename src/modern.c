@@ -20,7 +20,6 @@ GLuint make_buffer(GLenum target, GLsizei size, const void *data) {
   glGenBuffers(1, &buffer);
   glBindBuffer(target, buffer);
   glBufferData(target, size, data, GL_STATIC_DRAW);
-  glBindBuffer(target, 0);
 
   return buffer;
 }

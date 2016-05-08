@@ -15,8 +15,6 @@
 
 GLFWwindow *window;
 
-GLuint VertexArrayID;
-GLuint vertexbuffer;
 GLuint program;
 
 // Checks for OpenGL errors
@@ -80,7 +78,7 @@ int video_init() {
   return 0;
 }
 
-vbo_mesh *triangle;
+render_obj *render_objects[50];
 
 static mat4_t Model;
 static mat4_t View;
@@ -93,17 +91,6 @@ int render_init() {
   // Dark blue background
   glClearColor(0.45f, 0.45f, 0.8f, 1.0f);
 
-  glGenVertexArrays(1, &VertexArrayID);
-  glBindVertexArray(VertexArrayID);
-
-  GLfloat triangle_data[] = {
-    -0.5f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f,
-    0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
-    0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 0.5f
-  };
-
-  triangle = create_vbo_mesh(triangle_data, 6 * 3);
-
   // Create and compile our GLSL program from the shaders
   GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "vertex.sl");
   GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "fragment.sl");
@@ -112,7 +99,14 @@ int render_init() {
   // Use our shaders
   glUseProgram(program);
 
-  vertexbuffer = make_buffer(GL_ARRAY_BUFFER, sizeof(GLfloat) * triangle->vertex_count, triangle->buffer);
+  // Create Triangle
+  GLfloat triangle_data[] = {
+    -0.5f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f,
+    0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
+    0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 0.5f
+  };
+
+  render_objects[0] = create_render_obj(GL_TRIANGLES, triangle_data, 6 * 3);
 
   // Reset matrices to identity
   Model = IDENTITY_MATRIX;
@@ -144,33 +138,10 @@ void render() {
   // Add timer
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
 
-  // 1st attribute buffer : vertices
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-
-  glVertexAttribPointer(
-    0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-    3,                  // size
-    GL_FLOAT,           // type
-    GL_FALSE,           // normalized?
-    6 * sizeof(GLfloat),                  // stride
-    (GLvoid *) 0  // array buffer offset
-  );
-
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(
-    1,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-    3,                  // size
-    GL_FLOAT,           // type
-    GL_FALSE,           // normalized?
-    6 * sizeof(GLfloat),                  // stride
-    (GLvoid *) (3 * sizeof(GLfloat))  // array buffer offset
-  );
-
-  // Draw the triangle !
-  glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
+  // Render a render_obj
+  glBindVertexArray(render_objects[0]->vao_id);
+  glDrawArrays(render_objects[0]->mode, 0, render_objects[0]->indices_count); // 3 indices starting at 0 -> 1 triangle
+  glBindVertexArray(0);
 
   // Swap buffers
   glfwSwapBuffers(window);
@@ -182,10 +153,8 @@ void render_quit() {
   // and print to screen.
   check_opengl_error();
 
-  glDeleteBuffers(1, &vertexbuffer);
-  glDeleteVertexArrays(1, &VertexArrayID);
   glDeleteProgram(program);
-  destroy_vbo_mesh(triangle);
+  destroy_render_obj(render_objects[0]);
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();

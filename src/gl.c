@@ -1,27 +1,64 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define GLEW_STATIC
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+
 #include "gl.h"
+#include "modern.h"
 
-vbo_mesh *create_vbo_mesh(const GLfloat *mesh_data, int mesh_count) {
-  vbo_mesh *mesh = malloc(sizeof(vbo_mesh));
-  GLfloat *alloc_mesh_data = malloc(sizeof(GLfloat) * mesh_count);
+render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int mesh_count) {
+  render_obj *obj = malloc(sizeof(render_obj));
+  size_t mesh_size = sizeof(GLfloat) * mesh_count;
 
-  for (int i = 0; i < mesh_count; i++) {
-    alloc_mesh_data[i] = mesh_data[i];
-  }
+  // Create VAO
+  glGenVertexArrays(1, &obj->vao_id);
+  glBindVertexArray(obj->vao_id);
 
-  mesh->buffer = alloc_mesh_data;
-  mesh->vertex_count = mesh_count;
+  // Create VBO
+  obj->vbo_id = make_buffer(GL_ARRAY_BUFFER, mesh_size, mesh_data);
+  glBindBuffer(GL_ARRAY_BUFFER, obj->vbo_id);
 
-  return mesh;
+  obj->indices_count = mesh_count;
+  obj->mode = mode;
+  obj->size = sizeof(GLfloat) * mesh_count;
+
+
+  // 1st attribute buffer : vertices
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(
+    0,                  // attribute 0.
+    3,                  // size
+    GL_FLOAT,           // type
+    GL_FALSE,           // normalized?
+    6 * sizeof(GLfloat), // stride
+    (GLvoid *) 0  // array buffer offset
+  );
+
+  // 2nd attribute buffer : color info
+  glEnableVertexAttribArray(1);
+  glVertexAttribPointer(
+    1,                  // attribute 1.
+    3,                  // size
+    GL_FLOAT,           // type
+    GL_FALSE,           // normalized?
+    6 * sizeof(GLfloat), // stride
+    (GLvoid *) (3 * sizeof(GLfloat))  // array buffer offset
+  );
+
+  return obj;
 }
 
-int destroy_vbo_mesh(vbo_mesh *mesh) {
-  if (mesh == NULL) return 0;
+int destroy_render_obj(render_obj *obj) {
+  // VBO cleanup
+  // VAO cleanup
+  // free obj memory
 
-  free(mesh->buffer);
-  free(mesh);
+  glBindVertexArray(obj->vao_id);
+  glDeleteBuffers(1, &(obj->vbo_id));
+  glDeleteVertexArrays(1, &(obj->vao_id));
+  free(obj);
 
   return 0;
 }
