@@ -14,7 +14,6 @@
 #include "gl.h"
 
 GLFWwindow *window;
-
 GLuint program;
 
 // Checks for OpenGL errors
@@ -143,9 +142,6 @@ void render() {
 
   // Swap buffers
   glfwSwapBuffers(window);
-
-  // Poll for events
-  glfwPollEvents();
 }
 
 void render_quit() {
@@ -160,14 +156,21 @@ void render_quit() {
   glfwTerminate();
 }
 
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+  if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
+}
+
 int main(void) {
   // Initialise GLFW
 
   if (video_init() == -1) return -1;
   if (render_init() == -1) return -1;
 
+  glfwSetKeyCallback(window, key_callback);
+
   while (!glfwWindowShouldClose(window)) {
     render();
+    glfwPollEvents();
   }
 
   return 0;
