@@ -139,12 +139,12 @@ void render() {
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
 
   // Render a render_obj
-  glBindVertexArray(render_objects[0]->vao_id);
-  glDrawArrays(render_objects[0]->mode, 0, render_objects[0]->indices_count); // 3 indices starting at 0 -> 1 triangle
-  glBindVertexArray(0);
+  draw_render_obj(render_objects[0]);
 
   // Swap buffers
   glfwSwapBuffers(window);
+
+  // Poll for events
   glfwPollEvents();
 }
 
