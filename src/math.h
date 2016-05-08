@@ -40,13 +40,13 @@ vec4_t mulmatvec4(const mat4_t* m, const vec4_t* v);
 void normalizevec4(vec4_t* v);
 GLfloat dotvec4(vec4_t v1, vec4_t v2);
 vec4_t crossvec4(vec4_t v1, vec4_t v2);
-void rotateX(const mat4_t* m, GLfloat angle);
-void rotateY(const mat4_t* m, GLfloat angle);
-void rotateZ(const mat4_t* m, GLfloat angle);
-void scale(const mat4_t* m, GLfloat x, GLfloat y, GLfloat z);
-void translate(const mat4_t* m, GLfloat x, GLfloat y, GLfloat z);
+void rotateX(mat4_t* m, GLfloat angle);
+void rotateY(mat4_t* m, GLfloat angle);
+void rotateZ(mat4_t* m, GLfloat angle);
+void scale(mat4_t* m, GLfloat x, GLfloat y, GLfloat z);
+void translate(mat4_t* m, GLfloat x, GLfloat y, GLfloat z);
 
 mat4_t perspective(GLfloat fovy, GLfloat aspect_ratio, GLfloat near_plane, GLfloat far_plane);
 mat4_t orthogonal(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top);
 
-mat4_t lookAt(vec4_t pos, vec4_t dir);
+mat4_t lookAt(vec4_t pos, vec4_t dir, vec4_t up);

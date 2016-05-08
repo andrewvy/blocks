@@ -1,3 +1,4 @@
+#include <string.h>
 #include "math.h"
 
 static const double PI = 3.14159265358979323846;
@@ -51,7 +52,7 @@ vec4_t crossvec4(vec4_t v1, vec4_t v2) {
   out.m[2] = v1.m[0]*v2.m[1] - v1.m[1]*v2.m[0];
   return out;
 }
-void rotateX(const mat4_t* m, GLfloat angle) {
+void rotateX(mat4_t* m, GLfloat angle) {
   mat4_t rotation = IDENTITY_MATRIX;
   GLfloat sine = (GLfloat)sin(angle);
   GLfloat cosine = (GLfloat)cos(angle);
@@ -63,7 +64,7 @@ void rotateX(const mat4_t* m, GLfloat angle) {
 
   memcpy(m->m, multiplymat4(m, &rotation).m, sizeof(m->m));
 }
-void rotateY(const mat4_t* m, GLfloat angle) {
+void rotateY(mat4_t* m, GLfloat angle) {
   mat4_t rotation = IDENTITY_MATRIX;
   GLfloat sine = (GLfloat)sin(angle);
   GLfloat cosine = (GLfloat)cos(angle);
@@ -75,7 +76,7 @@ void rotateY(const mat4_t* m, GLfloat angle) {
 
   memcpy(m->m, multiplymat4(m, &rotation).m, sizeof(m->m));
 }
-void rotateZ(const mat4_t* m, GLfloat angle) {
+void rotateZ(mat4_t* m, GLfloat angle) {
   mat4_t rotation = IDENTITY_MATRIX;
   GLfloat sine = (GLfloat)sin(angle);
   GLfloat cosine = (GLfloat)cos(angle);
@@ -87,7 +88,7 @@ void rotateZ(const mat4_t* m, GLfloat angle) {
 
   memcpy(m->m, multiplymat4(m, &rotation).m, sizeof(m->m));
 }
-void scale(const mat4_t* m, GLfloat x, GLfloat y, GLfloat z) {
+void scale(mat4_t* m, GLfloat x, GLfloat y, GLfloat z) {
   mat4_t scale = IDENTITY_MATRIX;
 
   scale.m[0] = x;
@@ -96,7 +97,7 @@ void scale(const mat4_t* m, GLfloat x, GLfloat y, GLfloat z) {
 
   memcpy(m->m, multiplymat4(m, &scale).m, sizeof(m->m));
 }
-void translate(const mat4_t* m, GLfloat x, GLfloat y, GLfloat z) {
+void translate(mat4_t* m, GLfloat x, GLfloat y, GLfloat z) {
   mat4_t translation = IDENTITY_MATRIX;
 
   translation.m[12] = x;
@@ -133,29 +134,29 @@ mat4_t orthogonal(GLfloat left, GLfloat right, GLfloat bottom, GLfloat top) {
   return out;
 }
 
-mat4_t lookAt(vec4_t pos, vec4_t dir) {
+mat4_t lookAt(vec4_t pos, vec4_t dir, vec4_t up) {
   vec4_t f = dir;
   normalizevec4(&f);
-  vec4_t u = {{0, 1, 0, 0}};
-  vec4_t s = crossvec4(f, u);
+  vec4_t s = crossvec4(f, up);
   normalizevec4(&s);
-  u = crossvec4(s, f);
+  up = crossvec4(s, f);
 
   mat4_t out = IDENTITY_MATRIX;
   out.m[0] = s.x;
   out.m[4] = s.y;
   out.m[8] = s.z;
 
-  out.m[1] = u.x;
-  out.m[5] = u.y;
-  out.m[9] = u.z;
+  out.m[1] = up.x;
+  out.m[5] = up.y;
+  out.m[9] = up.z;
 
   out.m[2] = -f.x;
   out.m[6] = -f.y;
   out.m[10] = -f.z;
 
   out.m[12] = -dotvec4(s, pos);
-  out.m[13] = -dotvec4(u, pos);
+  out.m[13] = -dotvec4(up, pos);
   out.m[14] =  dotvec4(f, pos);
+
   return out;
 }

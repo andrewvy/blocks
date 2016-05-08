@@ -34,19 +34,8 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int m
     3,                  // size
     GL_FLOAT,           // type
     GL_FALSE,           // normalized?
-    6 * sizeof(GLfloat), // stride
+    3 * sizeof(GLfloat), // stride
     (GLvoid *) 0  // array buffer offset
-  );
-
-  // 2nd attribute buffer : color info
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(
-    1,                  // attribute 1.
-    3,                  // size
-    GL_FLOAT,           // type
-    GL_FALSE,           // normalized?
-    6 * sizeof(GLfloat), // stride
-    (GLvoid *) (3 * sizeof(GLfloat))  // array buffer offset
   );
 
   return obj;

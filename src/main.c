@@ -98,16 +98,42 @@ int render_init() {
   // Use our shaders
   glUseProgram(program);
 
-  // Create Triangle
-  GLfloat triangle_data[] = {
-    -0.5f, -0.5f, 0.0f, 0.5f, 0.0f, 0.0f,
-    0.5f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f,
-    0.0f,  0.5f, 0.0f, 0.0f, 0.0f, 0.5f
+  int width, height;
+  glfwGetFramebufferSize(window, &width, &height);
+  glViewport(0, 0, width, height);
+
+  GLfloat verts[] = {
+    //front
+    -0.5f, -0.5f,  0.5f, 0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
+    -0.5f, -0.5f,  0.5f, 0.5f, -0.5f,  0.5f,  0.5f,  0.5f,  0.5f,
+
+    //bottom
+    -0.5f, -0.5f, -0.5f, 0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f,
+    -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f,  0.5f, -0.5f,  0.5f,
+
+    //left
+    -0.5f, -0.5f, -0.5f, 0.5f,  0.5f,  0.5f, -0.5f,  0.5f, -0.5f,
+    -0.5f, -0.5f, -0.5f, 0.5f, -0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
+
+    //right
+     0.5f,  0.5f, -0.5f, 0.5f,  0.5f, 0.5f,  0.5f, -0.5f,  0.5f,
+     0.5f, -0.5f,  0.5f, 0.5f, -0.5f, -0.5f,  0.5f,  0.5f, -0.5f,
+
+    //top
+    -0.5f,  0.5f,  0.5f, 0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f,
+    -0.5f,  0.5f,  0.5f, 0.5f,  0.5f,  0.5f,  0.5f,  0.5f, -0.5f,
+
+    //back
+     0.5f, -0.5f, -0.5f, 0.5f,  0.5f, -0.5f,  0.5f,  0.5f, -0.5f,
+     0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f,  0.5f, -0.5f
   };
 
-  render_objects[0] = create_render_obj(GL_TRIANGLES, triangle_data, 6 * 3);
+  render_objects[0] = create_render_obj(GL_TRIANGLES, verts, 6 * 6 * 3);
 
   // Reset matrices to identity
+  vec4_t camera_pos = {{0}};
+  vec4_t camera_foc = {{0, 0, -1, 0}};
+  vec4_t camera_up = {{0, 0, 1, 0}};
   Model = IDENTITY_MATRIX;
   View = IDENTITY_MATRIX;
   Projection = IDENTITY_MATRIX;
@@ -123,6 +149,8 @@ void render() {
 
   // Apply rotation on the model
   rotateX(&Model, 0.02);
+  rotateY(&Model, 0.02);
+  rotateZ(&Model, 0.01);
 
   // Load matrices
   GLint model = glGetUniformLocation(program, "Model");
