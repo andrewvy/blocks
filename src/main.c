@@ -10,8 +10,9 @@
 #include <GLFW/glfw3.h>
 
 #include "third-party/linmath.h"
-#include "modern.h"
 #include "gl.h"
+#include "modern.h"
+#include "camera.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -86,9 +87,7 @@ static mat4x4 Model;
 static mat4x4 View;
 static mat4x4 Projection;
 
-static vec3 cam_eye = { 3, 3, 3 };
-static vec3 cam_center = { 0, 0, 0 };
-static vec3 cam_up = { 0, 1, 0 };
+static camera Camera;
 
 int render_init() {
   // Ensure we can capture the escape key being pressed below
@@ -106,9 +105,13 @@ int render_init() {
   // Use our shaders
   glUseProgram(program);
 
+  // Set viewport
   int width, height;
   glfwGetFramebufferSize(window, &width, &height);
   glViewport(0, 0, width, height);
+
+  // Initialize camera
+  init_camera(&Camera);
 
   GLfloat verts[] = {
     -1.0f,-1.0f,-1.0f,
@@ -164,8 +167,6 @@ int render_init() {
 
   // Reset matrices to identity
   mat4x4_identity(Model);
-  mat4x4_look_at(View, cam_eye, cam_center, cam_up);
-
   mat4x4_perspective(Projection, 45.0, 4.0 / 3.0, 0.1f, 20.0f);
 
   // Enable depth test
@@ -187,8 +188,10 @@ void render() {
   GLint model = glGetUniformLocation(program, "Model");
   glUniformMatrix4fv(model, 1, GL_TRUE, (GLfloat *) Model);
 
+  // Calculate camera
+  recalculate_camera(&Camera);
   GLint view = glGetUniformLocation(program, "View");
-  glUniformMatrix4fv(view, 1, GL_FALSE, (GLfloat *) View);
+  glUniformMatrix4fv(view, 1, GL_FALSE, (GLfloat *) Camera.matrix);
 
   GLint projection = glGetUniformLocation(program, "Projection");
   glUniformMatrix4fv(projection, 1, GL_FALSE, (GLfloat *) Projection);
@@ -219,54 +222,38 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
-static float horizontalAngle = 3.95f;
-static float verticalAngle = -0.6f;
-static float speed = 3.0f;
 static float mouseSpeed = 0.02f;
 
-void integrate(double time, float deltaTime) {
+void mouseInput(double time, float deltaTime) {
   double xpos, ypos;
 
   glfwGetCursorPos(window, &xpos, &ypos);
   glfwSetCursorPos(window, WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
 
-  horizontalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_WIDTH/2 - floor(xpos)));
-  verticalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_HEIGHT/2 - floor(ypos)));
-
-  vec3 direction = {
-    cos(verticalAngle) * sin(horizontalAngle),
-    sin(verticalAngle),
-    cos(verticalAngle) * cos(horizontalAngle)
-  };
-
-  vec3 right = {
-    sin(horizontalAngle - 3.14f/2.0f),
-    0,
-    cos(horizontalAngle - 3.14f/2.0f)
-  };
-
-  vec3 up;
-  vec3_mul_cross(up, right, direction);
-
-  vec3 position_direction;
-  vec3_add(position_direction, cam_eye, direction);
-
-  mat4x4_look_at(View, cam_eye, position_direction, up);
+  Camera.horizontalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_WIDTH/2 - floor(xpos)));
+  Camera.verticalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_HEIGHT/2 - floor(ypos)));
 }
+
+void keyInput(double time, float deltaTime) {
+  if (glfwGetKey(window, GLFW_KEY_A)) move_camera(&Camera, GLFW_KEY_A, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_D)) move_camera(&Camera, GLFW_KEY_D, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_W)) move_camera(&Camera, GLFW_KEY_W, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_S)) move_camera(&Camera, GLFW_KEY_S, deltaTime);
+}
+
+static double ongoingTime = 0.0;
+static double tickrate = 1 / 60.0;
+static double currentTime = 0.0;
 
 int main(void) {
   // Initialise GLFW
-
   if (video_init() == -1) return -1;
   if (render_init() == -1) return -1;
 
   glfwSetKeyCallback(window, key_callback);
-
-  double t = 0.0;
-  double dt = 1 / 60.0;
-  double currentTime = glfwGetTime();
-
   glfwSwapInterval(1);
+
+  currentTime = glfwGetTime();
 
   while (!glfwWindowShouldClose(window)) {
     double newTime = glfwGetTime();
@@ -274,17 +261,19 @@ int main(void) {
     currentTime = newTime;
 
     while (frameTime > 0.0) {
-      float deltaTime;
+      float deltaTime = 0.0;
 
-      if (frameTime < dt) {
+      if (frameTime < tickrate) {
         deltaTime = frameTime;
       } else {
-        deltaTime = dt;
+        deltaTime = tickrate;
       }
 
-      integrate(t, deltaTime);
+      mouseInput(ongoingTime, deltaTime);
+      keyInput(ongoingTime, deltaTime);
+
       frameTime -= deltaTime;
-      t += deltaTime;
+      ongoingTime += deltaTime;
     }
 
     render();
