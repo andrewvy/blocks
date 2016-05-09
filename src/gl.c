@@ -9,6 +9,8 @@
 #include "modern.h"
 #include "third-party/linmath.h"
 
+// #define BLOCKS_DEBUG
+
 render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int mesh_count) {
   render_obj *obj = malloc(sizeof(render_obj));
   size_t mesh_size = sizeof(GLfloat) * mesh_count;
@@ -66,6 +68,10 @@ int destroy_render_obj(render_obj *obj) {
 
 void draw_render_obj(render_obj *obj) {
   glBindVertexArray(obj->vao_id); // Bind VAO
+#ifdef BLOCKS_DEBUG
+  glDrawArrays(GL_LINES, 0, obj->indices_count); // 3 indices starting at 0 -> 1 triangle
+#else
   glDrawArrays(obj->mode, 0, obj->indices_count); // 3 indices starting at 0 -> 1 triangle
+#endif
   glBindVertexArray(0); // Clear bounded VAO
 }

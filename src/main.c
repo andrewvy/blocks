@@ -13,6 +13,9 @@
 #include "modern.h"
 #include "gl.h"
 
+#define WINDOW_WIDTH 1024
+#define WINDOW_HEIGHT 768
+
 GLFWwindow *window;
 GLuint program;
 
@@ -54,7 +57,7 @@ int video_init() {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
   // Open a window and create its OpenGL context
-  window = glfwCreateWindow(1024, 768, "Modern OpenGL", NULL, NULL);
+  window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Modern OpenGL", NULL, NULL);
 
   if (window == NULL) {
     printf("Failed to open GLFW window.\n" );
@@ -83,9 +86,14 @@ static mat4x4 Model;
 static mat4x4 View;
 static mat4x4 Projection;
 
+static vec3 cam_eye = { 3, 3, 3 };
+static vec3 cam_center = { 0, 0, 0 };
+static vec3 cam_up = { 0, 1, 0 };
+
 int render_init() {
   // Ensure we can capture the escape key being pressed below
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
+  glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // Dark blue background
   glClearColor(0.45f, 0.45f, 0.8f, 1.0f);
@@ -156,10 +164,6 @@ int render_init() {
 
   // Reset matrices to identity
   mat4x4_identity(Model);
-
-  vec3 cam_eye = { 0, 0, 5};
-  vec3 cam_center = { 0, 0, 0 };
-  vec3 cam_up = { 0, 1, 0 };
   mat4x4_look_at(View, cam_eye, cam_center, cam_up);
 
   mat4x4_perspective(Projection, 45.0, 4.0 / 3.0, 0.1f, 20.0f);
@@ -178,11 +182,6 @@ int render_init() {
 void render() {
   // Clear the screen
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  // Apply rotation on the model
-  mat4x4_rotate_X(Model, Model, (float) 0.01);
-  mat4x4_rotate_Y(Model, Model, (float) 0.02);
-  mat4x4_rotate_Z(Model, Model, (float) 0.03);
 
   // Load matrices
   GLint model = glGetUniformLocation(program, "Model");
@@ -220,6 +219,41 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
 }
 
+static float horizontalAngle = 3.95f;
+static float verticalAngle = -0.6f;
+static float speed = 3.0f;
+static float mouseSpeed = 0.02f;
+
+void integrate(double time, float deltaTime) {
+  double xpos, ypos;
+
+  glfwGetCursorPos(window, &xpos, &ypos);
+  glfwSetCursorPos(window, WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
+
+  horizontalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_WIDTH/2 - floor(xpos)));
+  verticalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_HEIGHT/2 - floor(ypos)));
+
+  vec3 direction = {
+    cos(verticalAngle) * sin(horizontalAngle),
+    sin(verticalAngle),
+    cos(verticalAngle) * cos(horizontalAngle)
+  };
+
+  vec3 right = {
+    sin(horizontalAngle - 3.14f/2.0f),
+    0,
+    cos(horizontalAngle - 3.14f/2.0f)
+  };
+
+  vec3 up;
+  vec3_mul_cross(up, right, direction);
+
+  vec3 position_direction;
+  vec3_add(position_direction, cam_eye, direction);
+
+  mat4x4_look_at(View, cam_eye, position_direction, up);
+}
+
 int main(void) {
   // Initialise GLFW
 
@@ -228,7 +262,31 @@ int main(void) {
 
   glfwSetKeyCallback(window, key_callback);
 
+  double t = 0.0;
+  double dt = 1 / 60.0;
+  double currentTime = glfwGetTime();
+
+  glfwSwapInterval(1);
+
   while (!glfwWindowShouldClose(window)) {
+    double newTime = glfwGetTime();
+    double frameTime = newTime - currentTime;
+    currentTime = newTime;
+
+    while (frameTime > 0.0) {
+      float deltaTime;
+
+      if (frameTime < dt) {
+        deltaTime = frameTime;
+      } else {
+        deltaTime = dt;
+      }
+
+      integrate(t, deltaTime);
+      frameTime -= deltaTime;
+      t += deltaTime;
+    }
+
     render();
     glfwPollEvents();
   }
