@@ -9,8 +9,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "third-party/linmath.h"
 #include "modern.h"
-#include "linmath.h"
 #include "gl.h"
 
 GLFWwindow *window;

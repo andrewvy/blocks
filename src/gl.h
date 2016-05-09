@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <GLFW/glfw3.h>
 
-#include "linmath.h"
+#include "third-party/linmath.h"
 
 typedef struct {
   GLuint vbo_id;
