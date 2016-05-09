@@ -29,15 +29,30 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int m
   // 1st attribute buffer : vertices
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(
-    0,                  // attribute 0.
-    3,                  // size
-    GL_FLOAT,           // type
-    GL_FALSE,           // normalized?
+    0,                   // attribute 0.
+    3,                   // size
+    GL_FLOAT,            // type
+    GL_FALSE,            // normalized?
     3 * sizeof(GLfloat), // stride
-    (GLvoid *) 0  // array buffer offset
+    (GLvoid *) 0         // array buffer offset
   );
 
   return obj;
+}
+
+int apply_render_obj_attribute(render_obj *obj, int attr_index, GLenum type, GLenum normalized, int elem_count, GLvoid *offset) {
+  glBindVertexArray(obj->vao_id);
+  glEnableVertexAttribArray(attr_index);
+  glVertexAttribPointer(
+    attr_index,                  // attribute 0.
+    elem_count,                  // size
+    type,                        // type
+    normalized,                  // normalized?
+    elem_count * sizeof(type),   // stride
+    offset                       // array buffer offset
+  );
+
+  return 0;
 }
 
 int destroy_render_obj(render_obj *obj) {

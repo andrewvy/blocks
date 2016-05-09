@@ -103,32 +103,56 @@ int render_init() {
   glViewport(0, 0, width, height);
 
   GLfloat verts[] = {
-    //front
-    -0.5f, -0.5f,  0.5f, 0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
-    -0.5f, -0.5f,  0.5f, 0.5f, -0.5f,  0.5f,  0.5f,  0.5f,  0.5f,
+    -1.0f,-1.0f,-1.0f,
+    -1.0f,-1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f,
 
-    //bottom
-    -0.5f, -0.5f, -0.5f, 0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f,
-    -0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f,  0.5f, -0.5f,  0.5f,
+    1.0f, 1.0f,-1.0f,
+    -1.0f,-1.0f,-1.0f,
+    -1.0f, 1.0f,-1.0f,
 
-    //left
-    -0.5f, -0.5f, -0.5f, 0.5f,  0.5f,  0.5f, -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f, 0.5f, -0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
+    1.0f,-1.0f, 1.0f,
+    -1.0f,-1.0f,-1.0f,
+    1.0f,-1.0f,-1.0f,
 
-    //right
-     0.5f,  0.5f, -0.5f, 0.5f,  0.5f, 0.5f,  0.5f, -0.5f,  0.5f,
-     0.5f, -0.5f,  0.5f, 0.5f, -0.5f, -0.5f,  0.5f,  0.5f, -0.5f,
+    1.0f, 1.0f,-1.0f,
+    1.0f,-1.0f,-1.0f,
+    -1.0f,-1.0f,-1.0f,
 
-    //top
-    -0.5f,  0.5f,  0.5f, 0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f,
-    -0.5f,  0.5f,  0.5f, 0.5f,  0.5f,  0.5f,  0.5f,  0.5f, -0.5f,
+    -1.0f,-1.0f,-1.0f,
+    -1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f,-1.0f,
 
-    //back
-     0.5f, -0.5f, -0.5f, 0.5f,  0.5f, -0.5f,  0.5f,  0.5f, -0.5f,
-     0.5f, -0.5f, -0.5f, 0.5f, -0.5f, -0.5f, -0.5f,  0.5f, -0.5f
+    1.0f,-1.0f, 1.0f,
+    -1.0f,-1.0f, 1.0f,
+    -1.0f,-1.0f,-1.0f,
+
+    -1.0f, 1.0f, 1.0f,
+    -1.0f,-1.0f, 1.0f,
+    1.0f,-1.0f, 1.0f,
+
+    1.0f, 1.0f, 1.0f,
+    1.0f,-1.0f,-1.0f,
+    1.0f, 1.0f,-1.0f,
+
+    1.0f,-1.0f,-1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f,-1.0f, 1.0f,
+
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f,-1.0f,
+    -1.0f, 1.0f,-1.0f,
+
+    1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f,-1.0f,
+    -1.0f, 1.0f, 1.0f,
+
+    1.0f,  1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f,
+    1.0f, -1.0f, 1.0f
   };
 
-  render_objects[0] = create_render_obj(GL_TRIANGLES, verts, 6 * 6 * 3);
+  render_objects[0] = create_render_obj(GL_TRIANGLES, verts, 3 * 3 * 12);
 
   // Reset matrices to identity
   mat4x4_identity(Model);
@@ -139,6 +163,13 @@ int render_init() {
   mat4x4_look_at(View, cam_eye, cam_center, cam_up);
 
   mat4x4_perspective(Projection, 45.0, 4.0 / 3.0, 0.1f, 20.0f);
+
+  // Enable depth test
+  glEnable(GL_DEPTH_TEST);
+
+  // Accept fragment if it closer to the camera than the former one
+  glDepthFunc(GL_LESS);
+
   check_opengl_error();
 
   return 0;
@@ -146,7 +177,7 @@ int render_init() {
 
 void render() {
   // Clear the screen
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Apply rotation on the model
   mat4x4_rotate_X(Model, Model, (float) 0.01);
