@@ -3,12 +3,12 @@
 #include <stdlib.h>
 #include <GLFW/glfw3.h>
 
-#include "math.h"
+#include "linmath.h"
 
 typedef struct {
   GLuint vbo_id;
   GLuint vao_id;
-  mat4_t transform;
+  mat4x4 *transform;
   GLenum mode; // GL_TRIANGLES
   GLuint indices_count; // Number of indices to draw
   size_t size;

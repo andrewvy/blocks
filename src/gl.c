@@ -7,7 +7,7 @@
 
 #include "gl.h"
 #include "modern.h"
-#include "math.h"
+#include "linmath.h"
 
 render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int mesh_count) {
   render_obj *obj = malloc(sizeof(render_obj));
@@ -22,7 +22,6 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int m
   glBindBuffer(GL_ARRAY_BUFFER, obj->vbo_id);
 
   // Set metadata + transform matrix
-  obj->transform = IDENTITY_MATRIX;
   obj->indices_count = mesh_count;
   obj->mode = mode;
   obj->size = sizeof(GLfloat) * mesh_count;

@@ -10,7 +10,7 @@
 #include <GLFW/glfw3.h>
 
 #include "modern.h"
-#include "math.h"
+#include "linmath.h"
 #include "gl.h"
 
 GLFWwindow *window;
@@ -79,9 +79,9 @@ int video_init() {
 
 render_obj *render_objects[50];
 
-static mat4_t Model;
-static mat4_t View;
-static mat4_t Projection;
+static mat4x4 Model;
+static mat4x4 View;
+static mat4x4 Projection;
 
 int render_init() {
   // Ensure we can capture the escape key being pressed below
@@ -131,13 +131,14 @@ int render_init() {
   render_objects[0] = create_render_obj(GL_TRIANGLES, verts, 6 * 6 * 3);
 
   // Reset matrices to identity
-  vec4_t camera_pos = {{0}};
-  vec4_t camera_foc = {{0, 0, -1, 0}};
-  vec4_t camera_up = {{0, 0, 1, 0}};
-  Model = IDENTITY_MATRIX;
-  View = IDENTITY_MATRIX;
-  Projection = IDENTITY_MATRIX;
+  mat4x4_identity(Model);
 
+  vec3 cam_eye = { 0, 0, 5};
+  vec3 cam_center = { 0, 0, 0 };
+  vec3 cam_up = { 0, 1, 0 };
+  mat4x4_look_at(View, cam_eye, cam_center, cam_up);
+
+  mat4x4_perspective(Projection, 45.0, 4.0 / 3.0, 0.1f, 20.0f);
   check_opengl_error();
 
   return 0;
@@ -148,19 +149,19 @@ void render() {
   glClear(GL_COLOR_BUFFER_BIT);
 
   // Apply rotation on the model
-  rotateX(&Model, 0.02);
-  rotateY(&Model, 0.02);
-  rotateZ(&Model, 0.01);
+  mat4x4_rotate_X(Model, Model, (float) 0.01);
+  mat4x4_rotate_Y(Model, Model, (float) 0.02);
+  mat4x4_rotate_Z(Model, Model, (float) 0.03);
 
   // Load matrices
   GLint model = glGetUniformLocation(program, "Model");
-  glUniformMatrix4fv(model, 1, GL_TRUE, &(Model.m[0]));
+  glUniformMatrix4fv(model, 1, GL_TRUE, (GLfloat *) Model);
 
   GLint view = glGetUniformLocation(program, "View");
-  glUniformMatrix4fv(view, 1, GL_FALSE, &(View.m[0]));
+  glUniformMatrix4fv(view, 1, GL_FALSE, (GLfloat *) View);
 
   GLint projection = glGetUniformLocation(program, "Projection");
-  glUniformMatrix4fv(projection, 1, GL_FALSE, &(Projection.m[0]));
+  glUniformMatrix4fv(projection, 1, GL_FALSE, (GLfloat *) Projection);
 
   // Add timer
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
