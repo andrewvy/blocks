@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdbool.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -15,6 +14,7 @@
 #include "camera.h"
 #include "image.h"
 
+#define WINDOW_NAME "blocks"
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
 
@@ -59,7 +59,7 @@ int video_init() {
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
   // Open a window and create its OpenGL context
-  window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Modern OpenGL", NULL, NULL);
+  window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, NULL, NULL);
 
   if (window == NULL) {
     printf("Failed to open GLFW window.\n" );
