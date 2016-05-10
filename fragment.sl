@@ -1,14 +1,13 @@
 #version 330 core
 
 uniform float timer;
+uniform sampler2D fragTexture;
 
 in vec4 outPosition;
+in vec2 UV;
+
 out vec3 color;
 
 void main() {
-  color = vec3(
-    sin(timer * 1) / abs(outPosition.z),
-    sin(timer * 0.66) / abs(outPosition.z),
-    sin(timer * 0.33) / abs(outPosition.z)
-  );
+  color = texture(fragTexture, UV).rgb;
 }

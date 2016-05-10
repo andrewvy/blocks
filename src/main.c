@@ -13,6 +13,7 @@
 #include "gl.h"
 #include "modern.h"
 #include "camera.h"
+#include "image.h"
 
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -89,6 +90,9 @@ static mat4x4 Projection;
 
 static camera Camera;
 
+static GLuint Texture;
+static GLuint TextureID;
+
 int render_init() {
   // Ensure we can capture the escape key being pressed below
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -113,57 +117,98 @@ int render_init() {
   // Initialize camera
   init_camera(&Camera);
 
-  GLfloat verts[] = {
+  static const GLfloat vert_data[] = {
     -1.0f,-1.0f,-1.0f,
     -1.0f,-1.0f, 1.0f,
     -1.0f, 1.0f, 1.0f,
-
-    1.0f, 1.0f,-1.0f,
+     1.0f, 1.0f,-1.0f,
     -1.0f,-1.0f,-1.0f,
     -1.0f, 1.0f,-1.0f,
 
-    1.0f,-1.0f, 1.0f,
+     1.0f,-1.0f, 1.0f,
     -1.0f,-1.0f,-1.0f,
-    1.0f,-1.0f,-1.0f,
-
-    1.0f, 1.0f,-1.0f,
-    1.0f,-1.0f,-1.0f,
+     1.0f,-1.0f,-1.0f,
+     1.0f, 1.0f,-1.0f,
+     1.0f,-1.0f,-1.0f,
     -1.0f,-1.0f,-1.0f,
 
     -1.0f,-1.0f,-1.0f,
     -1.0f, 1.0f, 1.0f,
     -1.0f, 1.0f,-1.0f,
-
-    1.0f,-1.0f, 1.0f,
+     1.0f,-1.0f, 1.0f,
     -1.0f,-1.0f, 1.0f,
     -1.0f,-1.0f,-1.0f,
 
     -1.0f, 1.0f, 1.0f,
     -1.0f,-1.0f, 1.0f,
-    1.0f,-1.0f, 1.0f,
+     1.0f,-1.0f, 1.0f,
+     1.0f, 1.0f, 1.0f,
+     1.0f,-1.0f,-1.0f,
+     1.0f, 1.0f,-1.0f,
 
-    1.0f, 1.0f, 1.0f,
-    1.0f,-1.0f,-1.0f,
-    1.0f, 1.0f,-1.0f,
-
-    1.0f,-1.0f,-1.0f,
-    1.0f, 1.0f, 1.0f,
-    1.0f,-1.0f, 1.0f,
-
-    1.0f, 1.0f, 1.0f,
-    1.0f, 1.0f,-1.0f,
+     1.0f,-1.0f,-1.0f,
+     1.0f, 1.0f, 1.0f,
+     1.0f,-1.0f, 1.0f,
+     1.0f, 1.0f, 1.0f,
+     1.0f, 1.0f,-1.0f,
     -1.0f, 1.0f,-1.0f,
 
-    1.0f, 1.0f, 1.0f,
+     1.0f, 1.0f, 1.0f,
     -1.0f, 1.0f,-1.0f,
     -1.0f, 1.0f, 1.0f,
-
-    1.0f,  1.0f, 1.0f,
+     1.0f, 1.0f, 1.0f,
     -1.0f, 1.0f, 1.0f,
-    1.0f, -1.0f, 1.0f
+     1.0f,-1.0f, 1.0f
   };
 
-  render_objects[0] = create_render_obj(GL_TRIANGLES, verts, 3 * 3 * 12);
+  static const GLfloat uv_data[] = {
+    0.000059f, 1.0f-0.000004f,
+    0.000103f, 1.0f-0.336048f,
+    0.335973f, 1.0f-0.335903f,
+    1.000023f, 1.0f-0.000013f,
+    0.667979f, 1.0f-0.335851f,
+    0.999958f, 1.0f-0.336064f,
+
+    0.667979f, 1.0f-0.335851f,
+    0.336024f, 1.0f-0.671877f,
+    0.667969f, 1.0f-0.671889f,
+    1.000023f, 1.0f-0.000013f,
+    0.668104f, 1.0f-0.000013f,
+    0.667979f, 1.0f-0.335851f,
+
+    0.000059f, 1.0f-0.000004f,
+    0.335973f, 1.0f-0.335903f,
+    0.336098f, 1.0f-0.000071f,
+    0.667979f, 1.0f-0.335851f,
+    0.335973f, 1.0f-0.335903f,
+    0.336024f, 1.0f-0.671877f,
+
+    1.000004f, 1.0f-0.671847f,
+    0.999958f, 1.0f-0.336064f,
+    0.667979f, 1.0f-0.335851f,
+    0.668104f, 1.0f-0.000013f,
+    0.335973f, 1.0f-0.335903f,
+    0.667979f, 1.0f-0.335851f,
+
+    0.335973f, 1.0f-0.335903f,
+    0.668104f, 1.0f-0.000013f,
+    0.336098f, 1.0f-0.000071f,
+    0.000103f, 1.0f-0.336048f,
+    0.000004f, 1.0f-0.671870f,
+    0.336024f, 1.0f-0.671877f,
+
+    0.000103f, 1.0f-0.336048f,
+    0.336024f, 1.0f-0.671877f,
+    0.335973f, 1.0f-0.335903f,
+    0.667969f, 1.0f-0.671889f,
+    1.000004f, 1.0f-0.671847f,
+    0.667979f, 1.0f-0.335851f
+  };
+
+  // Load the texture using any two methods
+  Texture = loadBMPImage("texture.bmp");
+
+  render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
 
   // Reset matrices to identity
   mat4x4_identity(Model);
@@ -199,6 +244,12 @@ void render() {
   // Add timer
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
 
+  // Add texture
+  TextureID = glGetUniformLocation(program, "fragTexture");
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, Texture);
+  glUniform1i(TextureID, 0);
+
   // Render a render_obj
   draw_render_obj(render_objects[0]);
 
@@ -212,6 +263,8 @@ void render_quit() {
   check_opengl_error();
 
   glDeleteProgram(program);
+  glDeleteTextures(1, &TextureID);
+
   destroy_render_obj(render_objects[0]);
 
   // Close OpenGL window and terminate GLFW
