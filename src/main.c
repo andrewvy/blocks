@@ -8,7 +8,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include "third-party/linmath.h"
+#define MATH_3D_IMPLEMENTATION
+#include "third-party/math_3d.h"
 #include "gl.h"
 #include "modern.h"
 #include "camera.h"
@@ -62,7 +63,7 @@ int video_init() {
   window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, WINDOW_NAME, NULL, NULL);
 
   if (window == NULL) {
-    printf("Failed to open GLFW window.\n" );
+    printf("Failed to open GLFW window.\n");
     glfwTerminate();
     return -1;
   }
@@ -84,9 +85,9 @@ int video_init() {
 
 render_obj *render_objects[50];
 
-static mat4x4 Model;
-static mat4x4 View;
-static mat4x4 Projection;
+static mat4_t Model;
+static mat4_t View;
+static mat4_t Projection;
 
 static camera Camera;
 
@@ -209,10 +210,10 @@ int render_init() {
   Texture = loadBMPImage("texture.bmp");
 
   render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
+  render_objects[0]->transform = m4_identity();
 
-  // Reset matrices to identity
-  mat4x4_identity(Model);
-  mat4x4_perspective(Projection, 45.0, 4.0 / 3.0, 0.1f, 20.0f);
+  // Set Projection matrix to perspective, with 1 rad FoV
+  Projection = m4_perspective(80.0f, width / height, 0.1f, 100.0f);
 
   // Enable depth test
   glEnable(GL_DEPTH_TEST);
@@ -229,17 +230,14 @@ void render() {
   // Clear the screen
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Load matrices
-  GLint model = glGetUniformLocation(program, "Model");
-  glUniformMatrix4fv(model, 1, GL_TRUE, (GLfloat *) Model);
-
-  // Calculate camera
+  // Calculate camera and set View uniform.
   recalculate_camera(&Camera);
   GLint view = glGetUniformLocation(program, "View");
-  glUniformMatrix4fv(view, 1, GL_FALSE, (GLfloat *) Camera.matrix);
+  glUniformMatrix4fv(view, 1, GL_FALSE, (GLfloat *) &Camera.matrix);
 
+  // Set projection matrix uniform.
   GLint projection = glGetUniformLocation(program, "Projection");
-  glUniformMatrix4fv(projection, 1, GL_FALSE, (GLfloat *) Projection);
+  glUniformMatrix4fv(projection, 1, GL_FALSE, (GLfloat *) &Projection);
 
   // Add timer
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
@@ -251,7 +249,9 @@ void render() {
   glUniform1i(TextureID, 0);
 
   // Render a render_obj
-  draw_render_obj(render_objects[0]);
+  for (int i = 0; i < 1; i++) {
+    draw_render_obj(program, render_objects[i]);
+  }
 
   // Swap buffers
   glfwSwapBuffers(window);
@@ -265,7 +265,9 @@ void render_quit() {
   glDeleteProgram(program);
   glDeleteTextures(1, &TextureID);
 
-  destroy_render_obj(render_objects[0]);
+  for (int i = 0; i < 5; i++) {
+    destroy_render_obj(render_objects[i]);
+  }
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();

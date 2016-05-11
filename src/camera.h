@@ -1,14 +1,13 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include "third-party/linmath.h"
 
 typedef struct {
-  mat4x4 matrix;
+  mat4_t matrix;
 
-  vec3 position;
-  vec3 center;
-  vec3 up;
+  vec3_t position;
+  vec3_t center;
+  vec3_t up;
 
   float horizontalAngle;
   float verticalAngle;

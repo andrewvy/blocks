@@ -7,7 +7,7 @@
 
 #include "gl.h"
 #include "modern.h"
-#include "third-party/linmath.h"
+#include "third-party/math_3d.h"
 
 // #define BLOCKS_DEBUG
 
@@ -25,6 +25,9 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int m
   obj->indices_count = mesh_count;
   obj->mode = mode;
   obj->size = sizeof(GLfloat) * mesh_count;
+
+  // Set model transform.
+  obj->transform = m4_identity();
 
   // Create VBO
   obj->vbo_id = make_buffer(GL_ARRAY_BUFFER, mesh_size, mesh_data);
@@ -80,8 +83,12 @@ int destroy_render_obj(render_obj *obj) {
   return 0;
 }
 
-void draw_render_obj(render_obj *obj) {
+void draw_render_obj(GLuint program, render_obj *obj) {
   glBindVertexArray(obj->vao_id); // Bind VAO
+
+  // Load matrices
+  GLint model = glGetUniformLocation(program, "Model");
+  glUniformMatrix4fv(model, 1, GL_TRUE, (GLfloat *) &obj->transform);
 
 #ifdef BLOCKS_DEBUG
   glDrawArrays(GL_LINES, 0, obj->indices_count); // 3 indices starting at 0 -> 1 triangle
