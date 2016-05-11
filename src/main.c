@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 
 #include "gl.h"
+#include "chunk.h"
 #include "modern.h"
 #include "camera.h"
 #include "image.h"
@@ -86,6 +87,8 @@ int video_init() {
 
 render_obj *render_objects[50];
 mat4_t render_object_transforms[50];
+
+static chunk *Chunk;
 
 static mat4_t Model;
 static mat4_t View;
@@ -213,13 +216,17 @@ int render_init() {
 
   render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
 
+  block *blocks[CHUNK_WIDTH * CHUNK_HEIGHT];
+
   int i = 0;
   for (int x = 0; x < 6; x++) {
     for (int z = 0; z < 6; z++) {
-      render_object_transforms[i] = m4_transpose(m4_translation(vec3((float) x * 2.0, 0.0f, (float) z * 2.0)));
+      blocks[i] = create_block(render_objects[0], vec3((float) x * 2.0, 0.0f, (float) z * 2.0));
       i++;
     }
   }
+
+  Chunk = create_chunk(blocks, i, vec3(0, 0, 0));
 
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 100.0f);
@@ -257,14 +264,10 @@ void render() {
   glUniform1i(TextureID, 0);
 
   // Render a render_obj
-  for (int i = 0; i < 36; i++) {
-    render_objects[0]->transform = render_object_transforms[i];
-
-    if (BLOCKS_DEBUG) {
-      debug_draw_render_obj(program, render_objects[0]);
-    } else {
-      draw_render_obj(program, render_objects[0]);
-    }
+  if (!BLOCKS_DEBUG) {
+    render_chunk(program, Chunk);
+  } else {
+    debug_render_chunk(program, Chunk);
   }
 
   // Swap buffers
