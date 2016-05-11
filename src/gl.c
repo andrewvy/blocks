@@ -11,6 +11,22 @@
 
 // #define BLOCKS_DEBUG
 
+int apply_render_obj_attribute(render_obj *obj, GLuint vbo_id, GLenum buffer_type, int attr_index, int elem_count, GLenum type, GLenum normalized, GLvoid *offset) {
+  glBindVertexArray(obj->vao_id);
+  glEnableVertexAttribArray(attr_index);
+  glBindBuffer(buffer_type, vbo_id);
+  glVertexAttribPointer(
+    attr_index,                  // attribute 0.
+    elem_count,                  // size
+    type,                        // type
+    normalized,                  // normalized?
+    elem_count * sizeof(type),   // stride
+    offset                       // array buffer offset
+  );
+
+  return 0;
+}
+
 render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int mesh_count, const GLfloat *uv_data, int uv_count) {
   render_obj *obj = malloc(sizeof(render_obj));
 
@@ -31,46 +47,31 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *mesh_data, int m
 
   // Create VBO
   obj->vbo_id = make_buffer(GL_ARRAY_BUFFER, mesh_size, mesh_data);
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, obj->vbo_id);
-  glVertexAttribPointer(
-    0,           // attribute 0.
-    3,           // size
-    GL_FLOAT,    // type
-    GL_FALSE,    // normalized?
-    0,           // stride
-    (void *) 0 // array buffer offset
+  apply_render_obj_attribute(
+    obj,             // Render Object
+    obj->vbo_id,     // ID of the VBO
+    GL_ARRAY_BUFFER, // Type of Buffer (GL_ARRAY_BUFFER)
+    0,               // Attribute Index of the VAO
+    3,               // Number of Elements
+    GL_FLOAT,        // Type of Element (GL_FLOAT)
+    GL_FALSE,        // Whether this is normalized?
+    (void *) 0       // Pointer to the offset (void pointer)
   );
 
   // Create UV VBO
   obj->uv_vbo_id = make_buffer(GL_ARRAY_BUFFER, uv_size, uv_data);
-  glEnableVertexAttribArray(1);
-  glBindBuffer(GL_ARRAY_BUFFER, obj->uv_vbo_id);
-  glVertexAttribPointer(
-    1,           // attribute 1.
-    2,           // size
-    GL_FLOAT,    // type
-    GL_FALSE,    // normalized?
-    0,           // stride
-    (void *) 0 // array buffer offset
+  apply_render_obj_attribute(
+    obj,             // Render Object
+    obj->uv_vbo_id,  // ID of the VBO
+    GL_ARRAY_BUFFER, // Type of Buffer (GL_ARRAY_BUFFER)
+    1,               // Attribute Index of the VAO
+    2,               // Number of Elements
+    GL_FLOAT,        // Type of Element (GL_FLOAT)
+    GL_FALSE,        // Whether this is normalized?
+    (void *) 0       // Pointer to the offset (void pointer)
   );
 
   return obj;
-}
-
-int apply_render_obj_attribute(render_obj *obj, int attr_index, GLenum type, GLenum normalized, int elem_count, GLvoid *offset) {
-  glBindVertexArray(obj->vao_id);
-  glEnableVertexAttribArray(attr_index);
-  glVertexAttribPointer(
-    attr_index,                  // attribute 0.
-    elem_count,                  // size
-    type,                        // type
-    normalized,                  // normalized?
-    elem_count * sizeof(type),   // stride
-    offset                       // array buffer offset
-  );
-
-  return 0;
 }
 
 int destroy_render_obj(render_obj *obj) {
@@ -90,11 +91,19 @@ void draw_render_obj(GLuint program, render_obj *obj) {
   GLint model = glGetUniformLocation(program, "Model");
   glUniformMatrix4fv(model, 1, GL_TRUE, (GLfloat *) &obj->transform);
 
-#ifdef BLOCKS_DEBUG
-  glDrawArrays(GL_LINES, 0, obj->indices_count); // 3 indices starting at 0 -> 1 triangle
-#else
   glDrawArrays(obj->mode, 0, obj->indices_count); // 3 indices starting at 0 -> 1 triangle
-#endif
+
+  glBindVertexArray(0); // Clear bounded VAO
+}
+
+void debug_draw_render_obj(GLuint program, render_obj *obj) {
+  glBindVertexArray(obj->vao_id); // Bind VAO
+
+  // Load matrices
+  GLint model = glGetUniformLocation(program, "Model");
+  glUniformMatrix4fv(model, 1, GL_TRUE, (GLfloat *) &obj->transform);
+
+  glDrawArrays(GL_LINES, 0, obj->indices_count); // 3 indices starting at 0 -> 1 triangle
 
   glBindVertexArray(0); // Clear bounded VAO
 }

@@ -1,4 +1,4 @@
-CC=gcc
+CC=cc
 SRCDIR := src
 BUILDDIR := build
 BINDIR := bin

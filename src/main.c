@@ -8,12 +8,13 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#define MATH_3D_IMPLEMENTATION
-#include "third-party/math_3d.h"
 #include "gl.h"
 #include "modern.h"
 #include "camera.h"
 #include "image.h"
+
+#define MATH_3D_IMPLEMENTATION
+#include "third-party/math_3d.h"
 
 #define WINDOW_NAME "blocks"
 #define WINDOW_WIDTH 1024
@@ -84,6 +85,7 @@ int video_init() {
 }
 
 render_obj *render_objects[50];
+mat4_t render_object_transforms[50];
 
 static mat4_t Model;
 static mat4_t View;
@@ -209,14 +211,12 @@ int render_init() {
   // Load the texture using any two methods
   Texture = loadBMPImage("texture.bmp");
 
-  for (int i = 0; i < 36; i++) {
-    render_objects[i] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
-  }
+  render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
 
   int i = 0;
   for (int x = 0; x < 6; x++) {
     for (int z = 0; z < 6; z++) {
-      render_objects[i]->transform = m4_transpose(m4_translation(vec3((float) x * 2.0, 0.0f, (float) z * 2.0)));
+      render_object_transforms[i] = m4_transpose(m4_translation(vec3((float) x * 2.0, 0.0f, (float) z * 2.0)));
       i++;
     }
   }
@@ -234,6 +234,8 @@ int render_init() {
 
   return 0;
 }
+
+static unsigned char BLOCKS_DEBUG = 0;
 
 void render() {
   // Clear the screen
@@ -256,7 +258,13 @@ void render() {
 
   // Render a render_obj
   for (int i = 0; i < 36; i++) {
-    draw_render_obj(program, render_objects[i]);
+    render_objects[0]->transform = render_object_transforms[i];
+
+    if (BLOCKS_DEBUG) {
+      debug_draw_render_obj(program, render_objects[0]);
+    } else {
+      draw_render_obj(program, render_objects[0]);
+    }
   }
 
   // Swap buffers
@@ -281,6 +289,7 @@ void render_quit() {
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
+  if (key == GLFW_KEY_1 && action == GLFW_PRESS) BLOCKS_DEBUG = !BLOCKS_DEBUG;
 }
 
 static float mouseSpeed = 0.02f;
