@@ -209,8 +209,17 @@ int render_init() {
   // Load the texture using any two methods
   Texture = loadBMPImage("texture.bmp");
 
-  render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
-  render_objects[0]->transform = m4_identity();
+  for (int i = 0; i < 36; i++) {
+    render_objects[i] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
+  }
+
+  int i = 0;
+  for (int x = 0; x < 6; x++) {
+    for (int z = 0; z < 6; z++) {
+      render_objects[i]->transform = m4_transpose(m4_translation(vec3((float) x * 2.0, 0.0f, (float) z * 2.0)));
+      i++;
+    }
+  }
 
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 100.0f);
@@ -232,12 +241,9 @@ void render() {
 
   // Calculate camera and set View uniform.
   recalculate_camera(&Camera);
-  GLint view = glGetUniformLocation(program, "View");
-  glUniformMatrix4fv(view, 1, GL_FALSE, (GLfloat *) &Camera.matrix);
-
-  // Set projection matrix uniform.
-  GLint projection = glGetUniformLocation(program, "Projection");
-  glUniformMatrix4fv(projection, 1, GL_FALSE, (GLfloat *) &Projection);
+  mat4_t ProjectionView = m4_mul(Projection, Camera.matrix);
+  GLint projection_view = glGetUniformLocation(program, "ProjectionView");
+  glUniformMatrix4fv(projection_view, 1, GL_FALSE, (GLfloat *) &ProjectionView);
 
   // Add timer
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
@@ -249,7 +255,7 @@ void render() {
   glUniform1i(TextureID, 0);
 
   // Render a render_obj
-  for (int i = 0; i < 1; i++) {
+  for (int i = 0; i < 36; i++) {
     draw_render_obj(program, render_objects[i]);
   }
 
@@ -265,7 +271,7 @@ void render_quit() {
   glDeleteProgram(program);
   glDeleteTextures(1, &TextureID);
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 36; i++) {
     destroy_render_obj(render_objects[i]);
   }
 
