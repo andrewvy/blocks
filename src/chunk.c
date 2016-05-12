@@ -19,12 +19,12 @@ block *create_block(render_obj *obj, vec3_t position) {
   return new_block;
 }
 
-void delete_block(block *render_block) {
+void destroy_block(block *render_block) {
   free(render_block);
 }
 
 chunk *create_chunk(block *block_array[], int block_count, vec3_t position) {
-  chunk *new_chunk = malloc(sizeof(chunk));
+  chunk *new_chunk = calloc(1, sizeof(chunk));
   new_chunk->position = position;
   new_chunk->block_count = block_count;
 
@@ -33,6 +33,14 @@ chunk *create_chunk(block *block_array[], int block_count, vec3_t position) {
   }
 
   return new_chunk;
+}
+
+void destroy_chunk(chunk *render_chunk) {
+  for (int i = 0; i < render_chunk->block_count; i++) {
+    destroy_block(&render_chunk->blocks[i]);
+  }
+
+  free(render_chunk);
 }
 
 void render_chunk(GLuint program, chunk *render_chunk) {

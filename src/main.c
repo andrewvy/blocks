@@ -282,9 +282,8 @@ void render_quit() {
   glDeleteProgram(program);
   glDeleteTextures(1, &TextureID);
 
-  for (int i = 0; i < 36; i++) {
-    destroy_render_obj(render_objects[i]);
-  }
+  destroy_render_obj(render_objects[0]);
+  destroy_chunk(Chunk);
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();

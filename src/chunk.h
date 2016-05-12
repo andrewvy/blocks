@@ -29,6 +29,7 @@ typedef struct {
 void create_chunk_manager(chunk_manager *manager, render_obj *obj[], int object_count);
 block *create_block(render_obj *obj, vec3_t position);
 chunk *create_chunk(block *block_array[], int block_count, vec3_t position);
-void delete_block(block *render_block);
+void destroy_block(block *render_block);
+void destroy_chunk(chunk *render_chunk);
 void render_chunk(GLuint program, chunk *render_chunk);
 void debug_render_chunk(GLuint program, chunk *render_chunk);
