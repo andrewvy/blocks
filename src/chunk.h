@@ -14,6 +14,7 @@ typedef struct {
   int32_t x;
   int32_t z;
   uint8_t *blocks;
+  render_obj *render_object;
 } chunk;
 
 typedef struct {
@@ -21,8 +22,12 @@ typedef struct {
 } chunk_manager;
 
 chunk *create_chunk(int32_t x, int32_t z);
+void generate_chunk_mesh(chunk *render_chunk);
 void create_cube_mesh(
-    GLfloat *data,
+    GLfloat **data_pointer,
     int left, int right, int top, int bottom, int front, int back,
-    int wleft, int wright, int wtop, int wbottom, int wfront, int wback);
+    int wleft, int wright, int wtop, int wbottom, int wfront, int wback,
+    GLfloat x, GLfloat y, GLfloat z, GLfloat cube_size);
+void render_chunk(GLuint program, chunk *render_chunk);
+void debug_render_chunk(GLuint program, chunk *render_chunk);
 int destroy_chunk(chunk *render_chunk);

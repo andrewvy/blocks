@@ -87,6 +87,7 @@ int video_init() {
 
 render_obj *render_objects[50];
 
+static chunk *Chunk;
 static mat4_t Model;
 static mat4_t View;
 static mat4_t Projection;
@@ -123,40 +124,11 @@ int render_init() {
   // Load the texture using any two methods
   Texture = loadBMPImage("texture.bmp");
 
+  // Create chunk
+  Chunk = create_chunk(0, 0);
+
   // Generate cube mesh which has top of the block unrendered.
-  GLfloat data[6 * 6 * 5];
-  create_cube_mesh(data,
-      1, 1, 0, 1, 1, 1,
-      1, 1, 1, 1, 1, 1);
-
-  // TODO(vy): Figure out how to calculate vertices of exposed faces:
-  // 6 vertices per face * NUMBER OF FACES
-  render_objects[0] = create_render_obj(GL_TRIANGLES, data, 6 * 6 * 5, 6 * 5);
-
-  // Bind Vertices
-  apply_render_obj_attribute(
-    render_objects[0],                // Render Object
-    render_objects[0]->buffers[0],    // ID of the VBO
-    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
-    0,                                // Attribute Index of the VAO
-    3,                                // Number of Elements
-    GL_FLOAT,                         // Type of Element (GL_FLOAT)
-    GL_FALSE,                         // Whether this is normalized?
-    (sizeof(GLfloat) * 5),
-    0                                 // Pointer to the offset (void pointer)
-  );
-
-  apply_render_obj_attribute(
-    render_objects[0],                // Render Object
-    render_objects[0]->buffers[0],    // ID of the VBO
-    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
-    1,                                // Attribute Index of the VAO
-    2,                                // Number of Elements
-    GL_FLOAT,                         // Type of Element (GL_FLOAT)
-    GL_FALSE,                         // Whether this is normalized?
-    (sizeof(GLfloat) * 5),
-    (GLvoid *) (sizeof(GLfloat) * 3)  // Pointer to the offset (void pointer)
-  );
+  generate_chunk_mesh(Chunk);
 
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 200.0f);
@@ -195,9 +167,9 @@ void render() {
 
   // Render a render_obj
   if (BLOCKS_DEBUG) {
-    debug_draw_render_obj(program, render_objects[0]);
+    debug_render_chunk(program, Chunk);
   } else {
-    draw_render_obj(program, render_objects[0]);
+    render_chunk(program, Chunk);
   }
 
   // Swap buffers
@@ -211,8 +183,7 @@ void render_quit() {
 
   glDeleteProgram(program);
   glDeleteTextures(1, &TextureID);
-
-  destroy_render_obj(render_objects[0]);
+  destroy_chunk(Chunk);
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();

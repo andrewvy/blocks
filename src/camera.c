@@ -4,9 +4,9 @@
 #include "camera.h"
 
 void init_camera(camera *cam) {
-  cam->position.x = 3;
-  cam->position.y = 3;
-  cam->position.z = 3;
+  cam->position.x = 0;
+  cam->position.y = 256;
+  cam->position.z = 0;
 
   cam->center.x = 3;
   cam->center.y = 3;

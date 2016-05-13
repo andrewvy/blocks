@@ -1,6 +1,0 @@
-Things to do:
-
-- store model transform matrix in render_obj.
-- load model transform matrix when drawing a render_obj.
-- clean up render_init code.
-- migrate rendering logic into render.c file.
