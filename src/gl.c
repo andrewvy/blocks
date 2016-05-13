@@ -11,7 +11,7 @@
 
 // #define BLOCKS_DEBUG
 
-int apply_render_obj_attribute(render_obj *obj, GLuint vbo_id, GLenum buffer_type, int attr_index, int elem_count, GLenum type, GLenum normalized, GLvoid *offset) {
+int apply_render_obj_attribute(render_obj *obj, GLuint vbo_id, GLenum buffer_type, int attr_index, int elem_count, GLenum type, GLenum normalized, GLsizei stride, GLvoid *offset) {
   glBindVertexArray(obj->vao_id);
   glEnableVertexAttribArray(attr_index);
   glBindBuffer(buffer_type, vbo_id);
@@ -20,7 +20,7 @@ int apply_render_obj_attribute(render_obj *obj, GLuint vbo_id, GLenum buffer_typ
     elem_count,                  // size
     type,                        // type
     normalized,                  // normalized?
-    0,   // stride
+    stride,                      // stride
     offset                       // array buffer offset
   );
 

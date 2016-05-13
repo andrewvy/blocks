@@ -21,4 +21,5 @@ typedef struct {
 } chunk_manager;
 
 chunk *create_chunk(int32_t x, int32_t z);
+void create_cube_mesh(GLfloat *data, uint8_t material_id);
 int destroy_chunk(chunk *render_chunk);

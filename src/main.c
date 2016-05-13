@@ -11,6 +11,7 @@
 #include "gl.h"
 #include "modern.h"
 #include "camera.h"
+#include "chunk.h"
 #include "image.h"
 
 #define MATH_3D_IMPLEMENTATION
@@ -119,122 +120,41 @@ int render_init() {
   // Initialize camera
   init_camera(&Camera);
 
-  static const GLfloat vert_data[] = {
-    -1.0f,-1.0f,-1.0f,
-    -1.0f,-1.0f, 1.0f,
-    -1.0f, 1.0f, 1.0f,
-     1.0f, 1.0f,-1.0f,
-    -1.0f,-1.0f,-1.0f,
-    -1.0f, 1.0f,-1.0f,
-
-     1.0f,-1.0f, 1.0f,
-    -1.0f,-1.0f,-1.0f,
-     1.0f,-1.0f,-1.0f,
-     1.0f, 1.0f,-1.0f,
-     1.0f,-1.0f,-1.0f,
-    -1.0f,-1.0f,-1.0f,
-
-    -1.0f,-1.0f,-1.0f,
-    -1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f,-1.0f,
-     1.0f,-1.0f, 1.0f,
-    -1.0f,-1.0f, 1.0f,
-    -1.0f,-1.0f,-1.0f,
-
-    -1.0f, 1.0f, 1.0f,
-    -1.0f,-1.0f, 1.0f,
-     1.0f,-1.0f, 1.0f,
-     1.0f, 1.0f, 1.0f,
-     1.0f,-1.0f,-1.0f,
-     1.0f, 1.0f,-1.0f,
-
-     1.0f,-1.0f,-1.0f,
-     1.0f, 1.0f, 1.0f,
-     1.0f,-1.0f, 1.0f,
-     1.0f, 1.0f, 1.0f,
-     1.0f, 1.0f,-1.0f,
-    -1.0f, 1.0f,-1.0f,
-
-     1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f,-1.0f,
-    -1.0f, 1.0f, 1.0f,
-     1.0f, 1.0f, 1.0f,
-    -1.0f, 1.0f, 1.0f,
-     1.0f,-1.0f, 1.0f,
-
-    0.000059f, 1.0f-0.000004f,
-    0.000103f, 1.0f-0.336048f,
-    0.335973f, 1.0f-0.335903f,
-    1.000023f, 1.0f-0.000013f,
-    0.667979f, 1.0f-0.335851f,
-    0.999958f, 1.0f-0.336064f,
-
-    0.667979f, 1.0f-0.335851f,
-    0.336024f, 1.0f-0.671877f,
-    0.667969f, 1.0f-0.671889f,
-    1.000023f, 1.0f-0.000013f,
-    0.668104f, 1.0f-0.000013f,
-    0.667979f, 1.0f-0.335851f,
-
-    0.000059f, 1.0f-0.000004f,
-    0.335973f, 1.0f-0.335903f,
-    0.336098f, 1.0f-0.000071f,
-    0.667979f, 1.0f-0.335851f,
-    0.335973f, 1.0f-0.335903f,
-    0.336024f, 1.0f-0.671877f,
-
-    1.000004f, 1.0f-0.671847f,
-    0.999958f, 1.0f-0.336064f,
-    0.667979f, 1.0f-0.335851f,
-    0.668104f, 1.0f-0.000013f,
-    0.335973f, 1.0f-0.335903f,
-    0.667979f, 1.0f-0.335851f,
-
-    0.335973f, 1.0f-0.335903f,
-    0.668104f, 1.0f-0.000013f,
-    0.336098f, 1.0f-0.000071f,
-    0.000103f, 1.0f-0.336048f,
-    0.000004f, 1.0f-0.671870f,
-    0.336024f, 1.0f-0.671877f,
-
-    0.000103f, 1.0f-0.336048f,
-    0.336024f, 1.0f-0.671877f,
-    0.335973f, 1.0f-0.335903f,
-    0.667969f, 1.0f-0.671889f,
-    1.000004f, 1.0f-0.671847f,
-    0.667979f, 1.0f-0.335851f
-  };
-
   // Load the texture using any two methods
   Texture = loadBMPImage("texture.bmp");
 
-  render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 180, 6 * 6);
+  // Generate cube mesh
+  GLfloat data[6 * 6 * 5];
+  create_cube_mesh(data, 1);
+  render_objects[0] = create_render_obj(GL_TRIANGLES, data, 6 * 6 * 5, 6 * 6);
 
   // Bind Vertices
   apply_render_obj_attribute(
-    render_objects[0],             // Render Object
-    render_objects[0]->buffers[0],     // ID of the VBO
-    GL_ARRAY_BUFFER, // Type of Buffer (GL_ARRAY_BUFFER)
-    0,               // Attribute Index of the VAO
-    3,               // Number of Elements
-    GL_FLOAT,        // Type of Element (GL_FLOAT)
-    GL_FALSE,        // Whether this is normalized?
-    (GLvoid *) 0       // Pointer to the offset (void pointer)
+    render_objects[0],                // Render Object
+    render_objects[0]->buffers[0],    // ID of the VBO
+    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
+    0,                                // Attribute Index of the VAO
+    3,                                // Number of Elements
+    GL_FLOAT,                         // Type of Element (GL_FLOAT)
+    GL_FALSE,                         // Whether this is normalized?
+    (sizeof(GLfloat) * 5),
+    0                                 // Pointer to the offset (void pointer)
   );
 
   apply_render_obj_attribute(
-    render_objects[0],             // Render Object
-    render_objects[0]->buffers[0],  // ID of the VBO
-    GL_ARRAY_BUFFER, // Type of Buffer (GL_ARRAY_BUFFER)
-    1,               // Attribute Index of the VAO
-    2,               // Number of Elements
-    GL_FLOAT,        // Type of Element (GL_FLOAT)
-    GL_FALSE,        // Whether this is normalized?
-    (GLvoid *) (6 * 6 * 3 * sizeof(GLfloat)) // Pointer to the offset (void pointer)
+    render_objects[0],                // Render Object
+    render_objects[0]->buffers[0],    // ID of the VBO
+    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
+    1,                                // Attribute Index of the VAO
+    2,                                // Number of Elements
+    GL_FLOAT,                         // Type of Element (GL_FLOAT)
+    GL_FALSE,                         // Whether this is normalized?
+    (sizeof(GLfloat) * 5),
+    (GLvoid *) (sizeof(GLfloat) * 3)  // Pointer to the offset (void pointer)
   );
 
   // Set Projection matrix to perspective, with 1 rad FoV
-  Projection = m4_perspective(80.0f, width / height, 0.1f, 100.0f);
+  Projection = m4_perspective(80.0f, width / height, 0.1f, 200.0f);
 
   // Enable depth test
   glEnable(GL_DEPTH_TEST);

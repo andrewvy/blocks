@@ -11,26 +11,26 @@ chunk *create_chunk(int32_t x, int32_t z) {
   return new_chunk;
 }
 
-float create_cube_mesh(uint8_t material_id) {
-  vec3_t vertices[24] = {
-    vec3(-1, -1, -1), vec3(-1, -1, +1), vec3(-1, +1, -1), vec3(-1, +1, +1),
-    vec3(+1, -1, -1), vec3(+1, -1, +1), vec3(+1, +1, -1), vec3(+1, +1, +1),
-    vec3(-1, +1, -1), vec3(-1, +1, +1), vec3(+1, +1, -1), vec3(+1, +1, +1),
-    vec3(-1, -1, -1), vec3(-1, -1, +1), vec3(+1, -1, -1), vec3(+1, -1, +1),
-    vec3(-1, -1, -1), vec3(-1, +1, -1), vec3(+1, -1, -1), vec3(+1, +1, -1),
-    vec3(-1, -1, +1), vec3(-1, +1, +1), vec3(+1, -1, +1), vec3(+1, +1, +1)
+void create_cube_mesh(GLfloat *data, uint8_t material_id) {
+  static const GLfloat vertices[6][4][3] = {
+    {{-1, -1, -1}, {-1, -1, +1}, {-1, +1, -1}, {-1, +1, +1}},
+    {{+1, -1, -1}, {+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+    {{-1, +1, -1}, {-1, +1, +1}, {+1, +1, -1}, {+1, +1, +1}},
+    {{-1, -1, -1}, {-1, -1, +1}, {+1, -1, -1}, {+1, -1, +1}},
+    {{-1, -1, -1}, {-1, +1, -1}, {+1, -1, -1}, {+1, +1, -1}},
+    {{-1, -1, +1}, {-1, +1, +1}, {+1, -1, +1}, {+1, +1, +1}}
   };
 
-  vec3_t normals[6] = {
-    vec3(-1, 0, 0),
-    vec3(+1, 0, 0),
-    vec3(0, +1, 0),
-    vec3(0, -1, 0),
-    vec3(0, 0, -1),
-    vec3(0, 0, +1)
+  static const GLfloat normals[6][3] = {
+    {-1, 0, 0},
+    {+1, 0, 0},
+    {0, +1, 0},
+    {0, -1, 0},
+    {0, 0, -1},
+    {0, 0, +1}
   };
 
-  float uvs[6][4][2] = {
+  static const GLfloat uvs[6][4][2] = {
     {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
     {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
     {{0, 1}, {0, 0}, {1, 1}, {1, 0}},
@@ -39,7 +39,43 @@ float create_cube_mesh(uint8_t material_id) {
     {{1, 0}, {1, 1}, {0, 0}, {0, 1}}
   };
 
-  return 0.0;
+  static const GLfloat indices[6][6] = {
+    {0, 3, 2, 0, 1, 3},
+    {0, 3, 1, 0, 2, 3},
+    {0, 3, 2, 0, 1, 3},
+    {0, 3, 1, 0, 2, 3},
+    {0, 3, 2, 0, 1, 3},
+    {0, 3, 1, 0, 2, 3}
+  };
+
+  static const GLfloat flipped[6][6] = {
+    {0, 1, 2, 1, 3, 2},
+    {0, 2, 1, 2, 3, 1},
+    {0, 1, 2, 1, 3, 2},
+    {0, 2, 1, 2, 3, 1},
+    {0, 1, 2, 1, 3, 2},
+    {0, 2, 1, 2, 3, 1}
+  };
+
+  GLfloat *data_pointer = data;
+
+  // UV calculation based on texture size!
+  // TODO(vy): CHANGE THESE
+  GLfloat s = 0.625;
+  GLfloat a = 0 + 1 / 2048.0;
+  GLfloat b = s - 1 / 2048.0;
+
+  // For each face, construct the mesh.
+  for (int i = 0; i < 6; i++) {
+    for (int v = 0; v < 6; v++) {
+      int j = indices[i][v];
+      *(data_pointer++) = vertices[i][j][0];
+      *(data_pointer++) = vertices[i][j][1];
+      *(data_pointer++) = vertices[i][j][2];
+      *(data_pointer++) = (uvs[i][j][0] ? b : a);
+      *(data_pointer++) = (uvs[i][j][1] ? b : a);
+    }
+  }
 }
 
 uint8_t block_from_index(chunk *render_chunk, uint32_t index) {
