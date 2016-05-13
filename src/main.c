@@ -123,10 +123,15 @@ int render_init() {
   // Load the texture using any two methods
   Texture = loadBMPImage("texture.bmp");
 
-  // Generate cube mesh
+  // Generate cube mesh which has top of the block unrendered.
   GLfloat data[6 * 6 * 5];
-  create_cube_mesh(data, 1);
-  render_objects[0] = create_render_obj(GL_TRIANGLES, data, 6 * 6 * 5, 6 * 6);
+  create_cube_mesh(data,
+      1, 1, 0, 1, 1, 1,
+      1, 1, 1, 1, 1, 1);
+
+  // TODO(vy): Figure out how to calculate vertices of exposed faces:
+  // 6 vertices per face * NUMBER OF FACES
+  render_objects[0] = create_render_obj(GL_TRIANGLES, data, 6 * 6 * 5, 6 * 5);
 
   // Bind Vertices
   apply_render_obj_attribute(

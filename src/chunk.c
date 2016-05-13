@@ -11,7 +11,25 @@ chunk *create_chunk(int32_t x, int32_t z) {
   return new_chunk;
 }
 
-void create_cube_mesh(GLfloat *data, uint8_t material_id) {
+// Graciously inspired via https://github.com/fogleman/Craft/blob/master/src/cube.c#L7
+// This implementation is 99% identical to the link above.
+//
+// However, I will try to make this:
+// - able to handle different sizes of textures without hardcoding resolution
+// - have better documentation around the variables
+// ----
+//
+// This method creates the mesh of the cube, but only with certain
+// faces exposed. The resulting mesh (output into &data) is the
+// vertices, normals, uvs of ONLY the exposed faces. This impacts
+// mem space on the overall mesh significantly.
+
+void create_cube_mesh(
+    GLfloat *data,
+    int left, int right, int top, int bottom, int front, int back,
+    int wleft, int wright, int wtop, int wbottom, int wfront, int wback
+  ) {
+
   static const GLfloat vertices[6][4][3] = {
     {{-1, -1, -1}, {-1, -1, +1}, {-1, +1, -1}, {-1, +1, +1}},
     {{+1, -1, -1}, {+1, -1, +1}, {+1, +1, -1}, {+1, +1, +1}},
@@ -58,6 +76,7 @@ void create_cube_mesh(GLfloat *data, uint8_t material_id) {
   };
 
   GLfloat *data_pointer = data;
+  int faces[6] = {left, right, top, bottom, front, back};
 
   // UV calculation based on texture size!
   // TODO(vy): CHANGE THESE
@@ -67,6 +86,9 @@ void create_cube_mesh(GLfloat *data, uint8_t material_id) {
 
   // For each face, construct the mesh.
   for (int i = 0; i < 6; i++) {
+    // Skip if face is missing.
+    if (faces[i] == 0) continue;
+
     for (int v = 0; v < 6; v++) {
       int j = indices[i][v];
       *(data_pointer++) = vertices[i][j][0];
