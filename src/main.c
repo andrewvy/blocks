@@ -9,7 +9,6 @@
 #include <GLFW/glfw3.h>
 
 #include "gl.h"
-#include "chunk.h"
 #include "modern.h"
 #include "camera.h"
 #include "image.h"
@@ -86,9 +85,6 @@ int video_init() {
 }
 
 render_obj *render_objects[50];
-mat4_t render_object_transforms[50];
-
-static chunk *Chunk;
 
 static mat4_t Model;
 static mat4_t View;
@@ -164,10 +160,8 @@ int render_init() {
     -1.0f, 1.0f, 1.0f,
      1.0f, 1.0f, 1.0f,
     -1.0f, 1.0f, 1.0f,
-     1.0f,-1.0f, 1.0f
-  };
+     1.0f,-1.0f, 1.0f,
 
-  static const GLfloat uv_data[] = {
     0.000059f, 1.0f-0.000004f,
     0.000103f, 1.0f-0.336048f,
     0.335973f, 1.0f-0.335903f,
@@ -214,19 +208,30 @@ int render_init() {
   // Load the texture using any two methods
   Texture = loadBMPImage("texture.bmp");
 
-  render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 3 * 6 * 6, uv_data, 6 * 2 * 6);
+  render_objects[0] = create_render_obj(GL_TRIANGLES, vert_data, 180, 6 * 6);
 
-  block *blocks[CHUNK_WIDTH * CHUNK_HEIGHT];
+  // Bind Vertices
+  apply_render_obj_attribute(
+    render_objects[0],             // Render Object
+    render_objects[0]->buffers[0],     // ID of the VBO
+    GL_ARRAY_BUFFER, // Type of Buffer (GL_ARRAY_BUFFER)
+    0,               // Attribute Index of the VAO
+    3,               // Number of Elements
+    GL_FLOAT,        // Type of Element (GL_FLOAT)
+    GL_FALSE,        // Whether this is normalized?
+    (GLvoid *) 0       // Pointer to the offset (void pointer)
+  );
 
-  int i = 0;
-  for (int x = 0; x < 6; x++) {
-    for (int z = 0; z < 6; z++) {
-      blocks[i] = create_block(render_objects[0], vec3((float) x * 2.0, 0.0f, (float) z * 2.0));
-      i++;
-    }
-  }
-
-  Chunk = create_chunk(blocks, i, vec3(0, 0, 0));
+  apply_render_obj_attribute(
+    render_objects[0],             // Render Object
+    render_objects[0]->buffers[0],  // ID of the VBO
+    GL_ARRAY_BUFFER, // Type of Buffer (GL_ARRAY_BUFFER)
+    1,               // Attribute Index of the VAO
+    2,               // Number of Elements
+    GL_FLOAT,        // Type of Element (GL_FLOAT)
+    GL_FALSE,        // Whether this is normalized?
+    (GLvoid *) (6 * 6 * 3 * sizeof(GLfloat)) // Pointer to the offset (void pointer)
+  );
 
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 100.0f);
@@ -264,10 +269,10 @@ void render() {
   glUniform1i(TextureID, 0);
 
   // Render a render_obj
-  if (!BLOCKS_DEBUG) {
-    render_chunk(program, Chunk);
+  if (BLOCKS_DEBUG) {
+    debug_draw_render_obj(program, render_objects[0]);
   } else {
-    debug_render_chunk(program, Chunk);
+    draw_render_obj(program, render_objects[0]);
   }
 
   // Swap buffers
@@ -283,7 +288,6 @@ void render_quit() {
   glDeleteTextures(1, &TextureID);
 
   destroy_render_obj(render_objects[0]);
-  destroy_chunk(Chunk);
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();

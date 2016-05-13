@@ -1,64 +1,69 @@
+#include <GLFW/glfw3.h>
+
 #include "third-party/math_3d.h"
 #include "chunk.h"
 #include "gl.h"
 
-void create_chunk_manager(chunk_manager *manager, render_obj *obj[], int object_count) {
-  manager->object_types = malloc(sizeof(void *) * object_count);
-  manager->object_count = object_count;
-
-  for (int i = 0; i < object_count; i++) {
-    manager->object_types[i] = *obj[object_count];
-  }
-}
-
-block *create_block(render_obj *obj, vec3_t position) {
-  block *new_block = malloc(sizeof(block));
-  new_block->position = position;
-  new_block->object = obj;
-
-  return new_block;
-}
-
-void destroy_block(block *render_block) {
-  free(render_block);
-}
-
-chunk *create_chunk(block *block_array[], int block_count, vec3_t position) {
-  chunk *new_chunk = calloc(1, sizeof(chunk));
-  new_chunk->position = position;
-  new_chunk->block_count = block_count;
-
-  for (int i = 0; i < block_count; i++) {
-    new_chunk->blocks[i] = *block_array[i];
-  }
+chunk *create_chunk(int32_t x, int32_t z) {
+  chunk *new_chunk = malloc(sizeof(chunk));
+  new_chunk->blocks = (uint8_t *) calloc(1, sizeof(CHUNK_SIZE));
 
   return new_chunk;
 }
 
-void destroy_chunk(chunk *render_chunk) {
-  for (int i = 0; i < render_chunk->block_count; i++) {
-    destroy_block(&render_chunk->blocks[i]);
-  }
+float create_cube_mesh(uint8_t material_id) {
+  vec3_t vertices[24] = {
+    vec3(-1, -1, -1), vec3(-1, -1, +1), vec3(-1, +1, -1), vec3(-1, +1, +1),
+    vec3(+1, -1, -1), vec3(+1, -1, +1), vec3(+1, +1, -1), vec3(+1, +1, +1),
+    vec3(-1, +1, -1), vec3(-1, +1, +1), vec3(+1, +1, -1), vec3(+1, +1, +1),
+    vec3(-1, -1, -1), vec3(-1, -1, +1), vec3(+1, -1, -1), vec3(+1, -1, +1),
+    vec3(-1, -1, -1), vec3(-1, +1, -1), vec3(+1, -1, -1), vec3(+1, +1, -1),
+    vec3(-1, -1, +1), vec3(-1, +1, +1), vec3(+1, -1, +1), vec3(+1, +1, +1)
+  };
 
-  free(render_chunk);
+  vec3_t normals[6] = {
+    vec3(-1, 0, 0),
+    vec3(+1, 0, 0),
+    vec3(0, +1, 0),
+    vec3(0, -1, 0),
+    vec3(0, 0, -1),
+    vec3(0, 0, +1)
+  };
+
+  float uvs[6][4][2] = {
+    {{0, 0}, {1, 0}, {0, 1}, {1, 1}},
+    {{1, 0}, {0, 0}, {1, 1}, {0, 1}},
+    {{0, 1}, {0, 0}, {1, 1}, {1, 0}},
+    {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+    {{0, 0}, {0, 1}, {1, 0}, {1, 1}},
+    {{1, 0}, {1, 1}, {0, 0}, {0, 1}}
+  };
+
+  return 0.0;
+}
+
+uint8_t block_from_index(chunk *render_chunk, uint32_t index) {
+  return 0;
+}
+
+uint32_t index_from_block(uint16_t x, uint16_t y, uint16_t z) {
+  uint32_t x_length = CHUNK_WIDTH;
+  uint32_t z_length = CHUNK_HEIGHT;
+  uint32_t y_length = CHUNK_DEPTH;
+  if (x > x_length) x = x_length;
+  if (y > y_length) y = y_length;
+  if (z > z_length) z = z_length;
+
+  uint32_t index = (y * x_length * z_length) + (z * x_length) + x;
+  return index;
 }
 
 void render_chunk(GLuint program, chunk *render_chunk) {
-  for (int i = 0; i < render_chunk->block_count; i++) {
-    block *render_block = &render_chunk->blocks[i];
-
-    mat4_t transform = m4_transpose(m4_translation(vec3((float) (render_block->position.x), 0.0f, (float) (render_block->position.z))));
-    render_block->object->transform = transform;
-    draw_render_obj(program, render_block->object);
-  }
 }
 
-void debug_render_chunk(GLuint program, chunk *render_chunk) {
-  for (int i = 0; i < render_chunk->block_count; i++) {
-    block *render_block = &render_chunk->blocks[i];
+int destroy_chunk(chunk *render_chunk) {
+  free(render_chunk->blocks);
+  free(render_chunk);
 
-    mat4_t transform = m4_transpose(m4_translation(vec3((float) (render_block->position.x), 0.0f, (float) (render_block->position.z))));
-    render_block->object->transform = transform;
-    debug_draw_render_obj(program, render_block->object);
-  }
+  return 0;
 }
