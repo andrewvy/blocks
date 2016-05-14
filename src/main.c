@@ -17,6 +17,12 @@
 #define MATH_3D_IMPLEMENTATION
 #include "third-party/math_3d.h"
 
+#define FONTSTASH_IMPLEMENTATION
+#include "third-party/fontstash.h"
+
+#define GLFONTSTASH_IMPLEMENTATION
+#include "third-party/gl3fontstash.h"
+
 #define WINDOW_NAME "blocks"
 #define WINDOW_WIDTH 1024
 #define WINDOW_HEIGHT 768
@@ -97,6 +103,12 @@ static camera Camera;
 static GLuint Texture;
 static GLuint TextureID;
 
+// FONTS
+static GLfloat mat[16];
+static FONScontext *fontcontext;
+static int DroidRegular = 0;
+static float lineHeight = 0.0f;
+
 int render_init() {
   // Ensure we can capture the escape key being pressed below
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
@@ -139,14 +151,31 @@ int render_init() {
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 200.0f);
 
-  // Enable face culling
-  glEnable(GL_CULL_FACE);
+  // Set text rendering matrix
+  memset(mat, 0, 16 * sizeof(GLfloat));
+  mat[0] = 2.0 / width;
+  mat[5] = -2.0 / height;
+  mat[10] = 2.0;
+  mat[12] = -1.0;
+  mat[13] = 1.0;
+  mat[14] = -1.0;
+  mat[15] = 1.0;
 
-  // Enable depth test
-  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendEquation(GL_FUNC_ADD);
+  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
   // Accept fragment if it closer to the camera than the former one
   glDepthFunc(GL_LESS);
+
+  // Add fonts
+  fontcontext = gl3fonsCreate(1024, 1024, FONS_ZERO_TOPLEFT);
+  DroidRegular = fonsAddFont(fontcontext, "sans", "assets/DroidSerif-Regular.ttf");
+
+  fonsSetColor(fontcontext, gl3fonsRGBA(255,255,255,255)); // white
+  fonsSetSize(fontcontext, 36.0f); // 16 point font
+  fonsSetAlign(fontcontext, FONS_ALIGN_LEFT | FONS_ALIGN_TOP); // left/top aligned
+  fonsVertMetrics(fontcontext, NULL, NULL, &lineHeight);
 
   check_opengl_error();
 
@@ -155,7 +184,10 @@ int render_init() {
 
 static unsigned char BLOCKS_DEBUG = 0;
 
-void render() {
+void render(double starttime) {
+  // Use our shaders
+  glUseProgram(program);
+
   // Clear the screen
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -164,6 +196,12 @@ void render() {
   mat4_t ProjectionView = m4_mul(Projection, Camera.matrix);
   GLint projection_view = glGetUniformLocation(program, "ProjectionView");
   glUniformMatrix4fv(projection_view, 1, GL_FALSE, (GLfloat *) &ProjectionView);
+
+  // Enable face culling
+  glEnable(GL_CULL_FACE);
+
+  // Enable depth test
+  glEnable(GL_DEPTH_TEST);
 
   // Add timer
   glUniform1f(glGetUniformLocation(program, "timer"), glfwGetTime());
@@ -182,6 +220,21 @@ void render() {
       render_chunk(program, Chunks[i]);
     }
   }
+  // Enable face culling
+  glDisable(GL_CULL_FACE);
+
+  // Enable depth test
+  glDisable(GL_DEPTH_TEST);
+
+  // Render text
+  gl3fonsProjection(fontcontext, mat);
+
+  double endtime = glfwGetTime();
+  char performance[256];
+  sprintf(performance, "frametime: %2.4fms", (endtime - starttime) * 1000);
+
+  float dx = 10.0, dy = 10.0f;
+  fonsDrawText(fontcontext, dx, dy, performance, NULL);
 
   // Swap buffers
   glfwSwapBuffers(window);
@@ -262,7 +315,9 @@ int main(void) {
       ongoingTime += deltaTime;
     }
 
-    render();
+    double starttime = glfwGetTime();
+    render(starttime);
+
     glfwPollEvents();
   }
 
