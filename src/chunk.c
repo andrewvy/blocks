@@ -4,7 +4,7 @@
 #include "chunk.h"
 #include "gl.h"
 
-chunk *create_chunk(int32_t x, int32_t z) {
+chunk *create_chunk(GLfloat x, GLfloat z) {
   chunk *new_chunk = malloc(sizeof(chunk));
   new_chunk->blocks = (uint8_t *) calloc(1, sizeof(CHUNK_SIZE));
   new_chunk->x = x;
@@ -14,16 +14,17 @@ chunk *create_chunk(int32_t x, int32_t z) {
 }
 
 void generate_chunk_mesh(chunk *render_chunk) {
-  GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 6 * 5) * CHUNK_SIZE);
+  GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 5 * 5) * CHUNK_SIZE);
   GLfloat *buffer_pointer = buffer;
 
   for (int x = 0; x < CHUNK_WIDTH; x++) {
     for (int z = 0; z < CHUNK_HEIGHT; z++) {
       for (int y = 0; y < CHUNK_DEPTH; y++) {
-        uint8_t block = render_chunk->blocks[x + z + y];
+        uint32_t index = x + z + y;
+        uint8_t block = render_chunk->blocks[index];
 
         create_cube_mesh(&buffer_pointer,
-          1, 1, 1, 1, 1, 1,
+          1, 1, 1, 0, 1, 1,
           1, 1, 1, 1, 1, 1,
           x, y, z, 0.5
         );
@@ -36,8 +37,8 @@ void generate_chunk_mesh(chunk *render_chunk) {
   render_chunk->render_object = create_render_obj(
     GL_TRIANGLES,
     buffer,
-    (6 * 6 * 5) * CHUNK_SIZE,
-    (6 * 6) * CHUNK_SIZE
+    (6 * 5 * 5) * CHUNK_SIZE,
+    (6 * 5) * CHUNK_SIZE
   );
 
   // Bind Vertices
@@ -63,6 +64,16 @@ void generate_chunk_mesh(chunk *render_chunk) {
     GL_FALSE,                         // Whether this is normalized?
     (sizeof(GLfloat) * 5),
     (GLvoid *) (sizeof(GLfloat) * 3)  // Pointer to the offset (void pointer)
+  );
+
+  render_chunk->render_object->transform = m4_transpose(
+    m4_translation(
+      vec3(
+        render_chunk->x * CHUNK_WIDTH,
+        0,
+        render_chunk->z * CHUNK_HEIGHT
+      )
+    )
   );
 
 }
@@ -136,7 +147,7 @@ void create_cube_mesh(
 
   // UV calculation based on texture size!
   // TODO(vy): CHANGE THESE
-  GLfloat s = 0.625;
+  GLfloat s = 0.3025;
   GLfloat a = 0 + 1 / 2048.0;
   GLfloat b = s - 1 / 2048.0;
 
@@ -161,6 +172,12 @@ uint8_t block_from_index(chunk *render_chunk, uint32_t index) {
 }
 
 uint32_t index_from_block(uint16_t x, uint16_t y, uint16_t z) {
+  // uint modx = x % SIZEX;
+  // uint mody = y % SIZEY;
+  // uint modz = z % SIZEZ;
+
+  // return (modz * SIZEXY) + (modx * SIZEY) + mody;
+
   uint32_t x_length = CHUNK_WIDTH;
   uint32_t z_length = CHUNK_HEIGHT;
   uint32_t y_length = CHUNK_DEPTH;

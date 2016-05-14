@@ -4,20 +4,20 @@
 #include "camera.h"
 
 void init_camera(camera *cam) {
-  cam->position.x = 0;
-  cam->position.y = 256;
-  cam->position.z = 0;
+  cam->position.x = -5;
+  cam->position.y = 260;
+  cam->position.z = -5;
 
-  cam->center.x = 3;
-  cam->center.y = 3;
-  cam->center.z = 3;
+  cam->center.x = -1;
+  cam->center.y = 0;
+  cam->center.z = -1;
 
   cam->up.x = 0;
   cam->up.y = 1;
   cam->up.z = 0;
 
-  cam->horizontalAngle = 3.95f;
-  cam->verticalAngle = -0.6f;
+  cam->horizontalAngle = 0.60f;
+  cam->verticalAngle = -0.15f;
 
   cam->matrix = m4_look_at(cam->position, cam->center, cam->up);
 }

@@ -11,8 +11,8 @@
 #define LOADED_CHUNK_BOUNDARY 3
 
 typedef struct {
-  int32_t x;
-  int32_t z;
+  GLfloat x;
+  GLfloat z;
   uint8_t *blocks;
   render_obj *render_object;
 } chunk;
@@ -21,7 +21,7 @@ typedef struct {
   chunk *loaded_chunks[LOADED_CHUNK_BOUNDARY];
 } chunk_manager;
 
-chunk *create_chunk(int32_t x, int32_t z);
+chunk *create_chunk(GLfloat x, GLfloat z);
 void generate_chunk_mesh(chunk *render_chunk);
 void create_cube_mesh(
     GLfloat **data_pointer,

@@ -87,7 +87,7 @@ int video_init() {
 
 render_obj *render_objects[50];
 
-static chunk *Chunk;
+static chunk *Chunks[4];
 static mat4_t Model;
 static mat4_t View;
 static mat4_t Projection;
@@ -125,13 +125,22 @@ int render_init() {
   Texture = loadBMPImage("texture.bmp");
 
   // Create chunk
-  Chunk = create_chunk(0, 0);
+  Chunks[0] = create_chunk(0.0, 0.0);
+  Chunks[1] = create_chunk(0.0, -1.0);
+  Chunks[2] = create_chunk(-1.0, 0.0);
+  Chunks[3] = create_chunk(-1.0, -1.0);
 
   // Generate cube mesh which has top of the block unrendered.
-  generate_chunk_mesh(Chunk);
+  generate_chunk_mesh(Chunks[0]);
+  generate_chunk_mesh(Chunks[1]);
+  generate_chunk_mesh(Chunks[2]);
+  generate_chunk_mesh(Chunks[3]);
 
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 200.0f);
+
+  // Enable face culling
+  glEnable(GL_CULL_FACE);
 
   // Enable depth test
   glEnable(GL_DEPTH_TEST);
@@ -166,10 +175,12 @@ void render() {
   glUniform1i(TextureID, 0);
 
   // Render a render_obj
-  if (BLOCKS_DEBUG) {
-    debug_render_chunk(program, Chunk);
-  } else {
-    render_chunk(program, Chunk);
+  for (int i = 0; i < 4; i++) {
+    if (BLOCKS_DEBUG) {
+      debug_render_chunk(program, Chunks[i]);
+    } else {
+      render_chunk(program, Chunks[i]);
+    }
   }
 
   // Swap buffers
@@ -183,7 +194,10 @@ void render_quit() {
 
   glDeleteProgram(program);
   glDeleteTextures(1, &TextureID);
-  destroy_chunk(Chunk);
+
+  for (int i = 0; i < 4; i++) {
+    destroy_chunk(Chunks[i]);
+  }
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();
