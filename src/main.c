@@ -106,7 +106,7 @@ static GLuint TextureID;
 // FONTS
 static GLfloat mat[16];
 static FONScontext *fontcontext;
-static int DroidRegular = 0;
+static int SourceCodeProRegular = 0;
 static float lineHeight = 0.0f;
 
 int render_init() {
@@ -118,8 +118,8 @@ int render_init() {
   glClearColor(0.45f, 0.45f, 0.8f, 1.0f);
 
   // Create and compile our GLSL program from the shaders
-  GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "vertex.sl");
-  GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "fragment.sl");
+  GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "assets/shaders/vertex.sl");
+  GLuint fragment_shader = load_shader(GL_FRAGMENT_SHADER, "assets/shaders/fragment.sl");
   program = make_program(vertex_shader, fragment_shader);
 
   // Use our shaders
@@ -134,7 +134,7 @@ int render_init() {
   init_camera(&Camera);
 
   // Load the texture using any two methods
-  Texture = loadBMPImage("texture.bmp");
+  Texture = loadBMPImage("assets/textures/texture.bmp");
 
   // Create chunk
   Chunks[0] = create_chunk(0.0, 0.0);
@@ -170,9 +170,8 @@ int render_init() {
 
   // Add fonts
   fontcontext = gl3fonsCreate(1024, 1024, FONS_ZERO_TOPLEFT);
-  DroidRegular = fonsAddFont(fontcontext, "sans", "assets/DroidSerif-Regular.ttf");
+  SourceCodeProRegular = fonsAddFont(fontcontext, "sans", "assets/fonts/SourceCodePro-Regular.ttf");
 
-  fonsSetColor(fontcontext, gl3fonsRGBA(255,255,255,255)); // white
   fonsSetSize(fontcontext, 36.0f); // 16 point font
   fonsSetAlign(fontcontext, FONS_ALIGN_LEFT | FONS_ALIGN_TOP); // left/top aligned
   fonsVertMetrics(fontcontext, NULL, NULL, &lineHeight);
@@ -184,7 +183,7 @@ int render_init() {
 
 static unsigned char BLOCKS_DEBUG = 0;
 
-void render(double starttime) {
+void render() {
   // Use our shaders
   glUseProgram(program);
 
@@ -213,13 +212,17 @@ void render(double starttime) {
   glUniform1i(TextureID, 0);
 
   // Render a render_obj
-  for (int i = 0; i < 4; i++) {
+  // TODO(vy): Store number of loaded chunks.
+  int CHUNK_COUNT = 4;
+
+  for (int i = 0; i < CHUNK_COUNT; i++) {
     if (BLOCKS_DEBUG) {
       debug_render_chunk(program, Chunks[i]);
     } else {
       render_chunk(program, Chunks[i]);
     }
   }
+
   // Enable face culling
   glDisable(GL_CULL_FACE);
 
@@ -227,14 +230,33 @@ void render(double starttime) {
   glDisable(GL_DEPTH_TEST);
 
   // Render text
+  int vertex_count = 0;
+  for (int i = 0; i < CHUNK_COUNT; i++) {
+    vertex_count += Chunks[i]->render_object->indices_count;
+  }
+
   gl3fonsProjection(fontcontext, mat);
 
-  double endtime = glfwGetTime();
-  char performance[256];
-  sprintf(performance, "frametime: %2.4fms", (endtime - starttime) * 1000);
+  char gui_title[] = "Blocks 0.0.1-dev";
+  char gui_vertex_count[256];
+  char gui_camera_position[256];
 
-  float dx = 10.0, dy = 10.0f;
-  fonsDrawText(fontcontext, dx, dy, performance, NULL);
+  sprintf(gui_vertex_count, "Vertex Count: %2d", vertex_count);
+  gui_vertex_count[255] = '\0';
+
+  sprintf(gui_camera_position, "Camera Position <x: %2.2f, y: %2.2f, z: %2.2f>", Camera.position.x, Camera.position.y, Camera.position.z);
+  gui_camera_position[255] = '\0';
+
+  fonsSetColor(fontcontext, gl3fonsRGBA(255, 255, 255, 255)); // white
+  fonsDrawText(fontcontext, 10.0f, 10.0f, gui_title, NULL);
+  fonsDrawText(fontcontext, 10.0f, 40.0f, gui_vertex_count, NULL);
+  fonsDrawText(fontcontext, 10.0f, 70.0f, gui_camera_position, NULL);
+
+  if (BLOCKS_DEBUG) {
+    char gui_debug_mode[] = "DEBUG MODE ON";
+    fonsSetColor(fontcontext, gl3fonsRGBA(250, 85, 85, 255));
+    fonsDrawText(fontcontext, 10.0f, 100.0f, gui_debug_mode, NULL);
+  }
 
   // Swap buffers
   glfwSwapBuffers(window);
@@ -315,9 +337,7 @@ int main(void) {
       ongoingTime += deltaTime;
     }
 
-    double starttime = glfwGetTime();
-    render(starttime);
-
+    render();
     glfwPollEvents();
   }
 
