@@ -6,7 +6,13 @@
 
 chunk *create_chunk(GLfloat x, GLfloat z) {
   chunk *new_chunk = malloc(sizeof(chunk));
-  new_chunk->blocks = (uint8_t *) calloc(1, sizeof(CHUNK_SIZE));
+  new_chunk->blocks = (uint8_t *) calloc(1, sizeof(uint8_t) * CHUNK_SIZE);
+
+  // Sets all blocks to a non-air type. (1)
+  for (int i = 0; i < CHUNK_SIZE; i++) {
+    new_chunk->blocks[i] = 1;
+  }
+
   new_chunk->x = x;
   new_chunk->z = z;
 
@@ -14,31 +20,55 @@ chunk *create_chunk(GLfloat x, GLfloat z) {
 }
 
 void generate_chunk_mesh(chunk *render_chunk) {
-  GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 5 * 5) * CHUNK_SIZE);
+  GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 6 * 5) * CHUNK_SIZE);
   GLfloat *buffer_pointer = buffer;
+  int vertices_count = 0;
 
-  for (int x = 0; x < CHUNK_WIDTH; x++) {
-    for (int z = 0; z < CHUNK_HEIGHT; z++) {
-      for (int y = 0; y < CHUNK_DEPTH; y++) {
-        uint32_t index = x + z + y;
-        uint8_t block = render_chunk->blocks[index];
+  for (int i = 0; i < CHUNK_SIZE; i++) {
+    int x = i % CHUNK_X;
+    int z = (i / CHUNK_X) % CHUNK_Z;
+    int y = i / (CHUNK_X * CHUNK_Z);
 
-        create_cube_mesh(&buffer_pointer,
-          1, 1, 1, 0, 1, 1,
-          1, 1, 1, 1, 1, 1,
-          x, y, z, 0.5
-        );
-      }
-    }
+    uint8_t block = render_chunk->blocks[i];
+
+    // left(-x), right(+x), top(+y), bottom(-y), front(-z), back(+z)
+    uint8_t neighbors[6] = {1, 1, 1, 1, 1, 1};
+
+    // Calculate neighboring voxels and check if they are solid or not.
+    // If they are not solid, we should render a face. Otherwise, it is
+    // unnecessary to include the face. This resulting mesh will be
+    // contain only the exposed faces. Perf++.
+    //
+    // TODO(vy): Need to check between chunk boundaries for checking
+    // face exposure.
+    neighbors[0] = (x - 1 < 0) ? 1 : render_chunk->blocks[i - 1] == 0;
+    neighbors[1] = (x + 1 >= CHUNK_X) ? 1 : render_chunk->blocks[i + 1] == 0;
+    neighbors[2] = (y + 1 >= CHUNK_Y) ? 1 : render_chunk->blocks[i + (CHUNK_X * CHUNK_Z)] == 0;
+    neighbors[3] = (y - 1 < 0) ? 1 : render_chunk->blocks[i - (CHUNK_X * CHUNK_Z)] == 0;
+    neighbors[4] = (z - 1 < 0) ? 1 : render_chunk->blocks[i - CHUNK_X] == 0;
+    neighbors[5] = (z + 1 >= CHUNK_Z) ? 1 : render_chunk->blocks[i + CHUNK_X] == 0;
+
+    vertices_count += create_cube_mesh(&buffer_pointer,
+      neighbors[0], neighbors[1], neighbors[2], neighbors[3], neighbors[4], neighbors[5],
+      1, 1, 1, 1, 1, 1,
+      x, y, z, 0.5
+    );
   }
+
+
+  // Resize the mesh buffer to the actual size, since we allocated
+  // the largest size, but during mesh creation, we could have
+  // omitted faces, causing the buffer to be smaller than the
+  // maximum size.
+  buffer = realloc(buffer, (sizeof(GLfloat) * vertices_count * 5));
 
   // TODO(vy): Figure out how to calculate vertices of exposed faces:
   // 6 vertices per face * NUMBER OF FACES
   render_chunk->render_object = create_render_obj(
     GL_TRIANGLES,
     buffer,
-    (6 * 5 * 5) * CHUNK_SIZE,
-    (6 * 5) * CHUNK_SIZE
+    (6 * 6 * 5) * CHUNK_SIZE,
+    vertices_count
   );
 
   // Bind Vertices
@@ -69,9 +99,9 @@ void generate_chunk_mesh(chunk *render_chunk) {
   render_chunk->render_object->transform = m4_transpose(
     m4_translation(
       vec3(
-        render_chunk->x * CHUNK_WIDTH,
+        render_chunk->x * CHUNK_X,
         0,
-        render_chunk->z * CHUNK_HEIGHT
+        render_chunk->z * CHUNK_Z
       )
     )
   );
@@ -91,12 +121,14 @@ void generate_chunk_mesh(chunk *render_chunk) {
 // vertices, normals, uvs of ONLY the exposed faces. This impacts
 // mem space on the overall mesh significantly.
 
-void create_cube_mesh(
+int create_cube_mesh(
     GLfloat **data_pointer,
     int left, int right, int top, int bottom, int front, int back,
     int wleft, int wright, int wtop, int wbottom, int wfront, int wback,
     GLfloat x, GLfloat y, GLfloat z, GLfloat cube_size
   ) {
+
+  int vertices_count = 0;
 
   static const GLfloat vertices[6][4][3] = {
     {{-1, -1, -1}, {-1, -1, +1}, {-1, +1, -1}, {-1, +1, +1}},
@@ -163,8 +195,11 @@ void create_cube_mesh(
       *((*data_pointer)++) = z + cube_size * vertices[i][j][2];
       *((*data_pointer)++) = (uvs[i][j][0] ? b : a);
       *((*data_pointer)++) = (uvs[i][j][1] ? b : a);
+      vertices_count++;
     }
   }
+
+  return vertices_count;
 }
 
 uint8_t block_from_index(chunk *render_chunk, uint32_t index) {
@@ -178,9 +213,9 @@ uint32_t index_from_block(uint16_t x, uint16_t y, uint16_t z) {
 
   // return (modz * SIZEXY) + (modx * SIZEY) + mody;
 
-  uint32_t x_length = CHUNK_WIDTH;
-  uint32_t z_length = CHUNK_HEIGHT;
-  uint32_t y_length = CHUNK_DEPTH;
+  uint32_t x_length = CHUNK_X;
+  uint32_t z_length = CHUNK_Z;
+  uint32_t y_length = CHUNK_Y;
   if (x > x_length) x = x_length;
   if (y > y_length) y = y_length;
   if (z > z_length) z = z_length;
