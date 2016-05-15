@@ -1,9 +1,11 @@
 #include <stdlib.h>
+#include <math.h>
 #include <GLFW/glfw3.h>
 
 #include "third-party/math_3d.h"
 #include "player.h"
 #include "camera.h"
+#include "chunk.h"
 
 Player *create_player() {
   Player *player = malloc(sizeof(Player));
@@ -17,12 +19,22 @@ Player *create_player() {
   player->position.y = 260;
   player->position.z = -5;
 
+  player->chunk_position.x = 0;
+  player->chunk_position.y = 0;
+  player->chunk_position.z = 0;
+
   return player;
 }
 
 void destroy_player(Player *player) {
   destroy_camera(&(player->cam));
   free(player);
+}
+
+void recalculate_chunk_position(Player *player) {
+  player->chunk_position.x = floor(player->position.x / CHUNK_X);
+  player->chunk_position.y = 0.0;
+  player->chunk_position.z = floor(player->position.z / CHUNK_Z);
 }
 
 static float oldVerticalAngle = 0.0;
@@ -39,6 +51,7 @@ void recalculate_player(Player *player) {
       oldPosition.z != player->position.z ||
       oldSpeed != player->speed) {
 
+    // Recalculate camera matrix.
     recalculate_camera(
       &(player->cam),
       player->verticalAngle,
@@ -46,6 +59,9 @@ void recalculate_player(Player *player) {
       player->position,
       player->speed
     );
+
+    // Recalculate chunk position.
+    recalculate_chunk_position(player);
   }
 }
 

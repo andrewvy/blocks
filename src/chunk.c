@@ -21,6 +21,51 @@ chunk *create_chunk(GLfloat x, GLfloat z) {
   return new_chunk;
 }
 
+void upload_chunk_mesh(chunk *render_chunk, GLfloat *buffer, int vertices_count) {
+  // 6 vertices per face * NUMBER OF FACES
+  render_chunk->render_object = create_render_obj(
+    GL_TRIANGLES,
+    buffer,
+    (6 * 6 * 5) * CHUNK_SIZE,
+    vertices_count
+  );
+
+  // Bind Vertices
+  apply_render_obj_attribute(
+    render_chunk->render_object,                // Render Object
+    render_chunk->render_object->buffers[0],    // ID of the VBO
+    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
+    0,                                // Attribute Index of the VAO
+    3,                                // Number of Elements
+    GL_FLOAT,                         // Type of Element (GL_FLOAT)
+    GL_FALSE,                         // Whether this is normalized?
+    (sizeof(GLfloat) * 5),
+    0                                 // Pointer to the offset (void pointer)
+  );
+
+  apply_render_obj_attribute(
+    render_chunk->render_object,                // Render Object
+    render_chunk->render_object->buffers[0],    // ID of the VBO
+    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
+    1,                                // Attribute Index of the VAO
+    2,                                // Number of Elements
+    GL_FLOAT,                         // Type of Element (GL_FLOAT)
+    GL_FALSE,                         // Whether this is normalized?
+    (sizeof(GLfloat) * 5),
+    (GLvoid *) (sizeof(GLfloat) * 3)  // Pointer to the offset (void pointer)
+  );
+
+  render_chunk->render_object->transform = m4_transpose(
+    m4_translation(
+      vec3(
+        render_chunk->x * CHUNK_X,
+        0,
+        render_chunk->z * CHUNK_Z
+      )
+    )
+  );
+}
+
 void generate_chunk_mesh(chunk *render_chunk) {
   GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 6 * 5) * CHUNK_SIZE);
   GLfloat *buffer_pointer = buffer;
@@ -66,50 +111,7 @@ void generate_chunk_mesh(chunk *render_chunk) {
   // maximum size.
   buffer = realloc(buffer, (sizeof(GLfloat) * vertices_count * 5));
 
-  // TODO(vy): Figure out how to calculate vertices of exposed faces:
-  // 6 vertices per face * NUMBER OF FACES
-  render_chunk->render_object = create_render_obj(
-    GL_TRIANGLES,
-    buffer,
-    (6 * 6 * 5) * CHUNK_SIZE,
-    vertices_count
-  );
-
-  // Bind Vertices
-  apply_render_obj_attribute(
-    render_chunk->render_object,                // Render Object
-    render_chunk->render_object->buffers[0],    // ID of the VBO
-    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
-    0,                                // Attribute Index of the VAO
-    3,                                // Number of Elements
-    GL_FLOAT,                         // Type of Element (GL_FLOAT)
-    GL_FALSE,                         // Whether this is normalized?
-    (sizeof(GLfloat) * 5),
-    0                                 // Pointer to the offset (void pointer)
-  );
-
-  apply_render_obj_attribute(
-    render_chunk->render_object,                // Render Object
-    render_chunk->render_object->buffers[0],    // ID of the VBO
-    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
-    1,                                // Attribute Index of the VAO
-    2,                                // Number of Elements
-    GL_FLOAT,                         // Type of Element (GL_FLOAT)
-    GL_FALSE,                         // Whether this is normalized?
-    (sizeof(GLfloat) * 5),
-    (GLvoid *) (sizeof(GLfloat) * 3)  // Pointer to the offset (void pointer)
-  );
-
-  render_chunk->render_object->transform = m4_transpose(
-    m4_translation(
-      vec3(
-        render_chunk->x * CHUNK_X,
-        0,
-        render_chunk->z * CHUNK_Z
-      )
-    )
-  );
-
+  upload_chunk_mesh(render_chunk, buffer, vertices_count);
 }
 
 // Graciously inspired via https://github.com/fogleman/Craft/blob/master/src/cube.c#L7

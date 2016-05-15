@@ -176,6 +176,41 @@ int render_init() {
 
 static unsigned char BLOCKS_DEBUG = 0;
 
+void render_gui() {
+  int vertex_count = 0;
+  for (int i = 0; i < ChunkManager->number_of_loaded_chunks; i++) {
+    vertex_count += ChunkManager->loaded_chunks[i].render_object->indices_count;
+  }
+
+  gl3fonsProjection(fontcontext, mat);
+
+  char gui_title[] = "Blocks 0.0.1-dev";
+  char gui_vertex_count[256];
+  char gui_player_position[256];
+  char gui_chunk_position[256];
+
+  sprintf(gui_vertex_count, "Vertex Count: %2d", vertex_count);
+  gui_vertex_count[255] = '\0';
+
+  sprintf(gui_player_position, "Player Position <x: %2.2f, y: %2.2f, z: %2.2f>", player->position.x, player->position.y, player->position.z);
+  gui_player_position[255] = '\0';
+
+  sprintf(gui_chunk_position, "Chunk Position <x: %2.2f, z: %2.2f>", player->chunk_position.x, player->chunk_position.z);
+  gui_player_position[255] = '\0';
+
+  fonsSetColor(fontcontext, gl3fonsRGBA(255, 255, 255, 255)); // white
+  fonsDrawText(fontcontext, 10.0f, 10.0f, gui_title, NULL);
+  fonsDrawText(fontcontext, 10.0f, 40.0f, gui_vertex_count, NULL);
+  fonsDrawText(fontcontext, 10.0f, 70.0f, gui_player_position, NULL);
+  fonsDrawText(fontcontext, 10.0f, 100.0f, gui_chunk_position, NULL);
+
+  if (BLOCKS_DEBUG) {
+    char gui_debug_mode[] = "DEBUG MODE ON";
+    fonsSetColor(fontcontext, gl3fonsRGBA(250, 85, 85, 255));
+    fonsDrawText(fontcontext, 10.0f, 130.0f, gui_debug_mode, NULL);
+  }
+}
+
 void render() {
   // Use our shaders
   glUseProgram(program);
@@ -220,35 +255,8 @@ void render() {
   // Enable depth test
   glDisable(GL_DEPTH_TEST);
 
-  // Render text
-  int vertex_count = 0;
-  for (int i = 0; i < ChunkManager->number_of_loaded_chunks; i++) {
-    vertex_count += ChunkManager->loaded_chunks[i].render_object->indices_count;
-  }
-
-  gl3fonsProjection(fontcontext, mat);
-
-  char gui_title[] = "Blocks 0.0.1-dev";
-  char gui_vertex_count[256];
-  char gui_camera_position[256];
-  char gui_camera_rotation[256];
-
-  sprintf(gui_vertex_count, "Vertex Count: %2d", vertex_count);
-  gui_vertex_count[255] = '\0';
-
-  sprintf(gui_camera_position, "Player Position <x: %2.2f, y: %2.2f, z: %2.2f>", player->position.x, player->position.y, player->position.z);
-  gui_camera_position[255] = '\0';
-
-  fonsSetColor(fontcontext, gl3fonsRGBA(255, 255, 255, 255)); // white
-  fonsDrawText(fontcontext, 10.0f, 10.0f, gui_title, NULL);
-  fonsDrawText(fontcontext, 10.0f, 40.0f, gui_vertex_count, NULL);
-  fonsDrawText(fontcontext, 10.0f, 70.0f, gui_camera_position, NULL);
-
-  if (BLOCKS_DEBUG) {
-    char gui_debug_mode[] = "DEBUG MODE ON";
-    fonsSetColor(fontcontext, gl3fonsRGBA(250, 85, 85, 255));
-    fonsDrawText(fontcontext, 10.0f, 100.0f, gui_debug_mode, NULL);
-  }
+  // Render GUI
+  render_gui();
 
   // Swap buffers
   glfwSwapBuffers(window);
