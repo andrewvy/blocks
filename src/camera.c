@@ -7,6 +7,7 @@ void init_camera(camera *cam) {
   cam->position.x = -5;
   cam->position.y = 260;
   cam->position.z = -5;
+  cam->speed = 10.0f;
 
   cam->center.x = -1;
   cam->center.y = 0;
@@ -41,8 +42,6 @@ void recalculate_camera(camera *cam) {
   cam->matrix = m4_look_at(cam->position, position_direction, up);
 }
 
-static const float movementSpeed = 3.0f;
-
 void move_camera(camera *cam, GLenum key, float deltaTime) {
   vec3_t direction = vec3(
     cos(cam->verticalAngle) * sin(cam->horizontalAngle),
@@ -57,10 +56,10 @@ void move_camera(camera *cam, GLenum key, float deltaTime) {
   );
 
   vec3_t scaled_direction = v3_muls(direction, deltaTime);
-  scaled_direction = v3_muls(scaled_direction, movementSpeed);
+  scaled_direction = v3_muls(scaled_direction, cam->speed);
 
   vec3_t scaled_right = v3_muls(right, deltaTime);
-  scaled_right = v3_muls(scaled_right, movementSpeed);
+  scaled_right = v3_muls(scaled_right, cam->speed);
 
   switch (key) {
     case GLFW_KEY_A:

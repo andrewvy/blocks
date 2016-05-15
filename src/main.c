@@ -135,7 +135,7 @@ int render_init() {
   init_camera(&Camera);
 
   // Load the texture using any two methods
-  Texture = loadBMPImage("assets/textures/texture.bmp");
+  Texture = loadPNGImage("assets/textures/blocks.png");
 
   // Create Chunk Manager
   ChunkManager = create_chunk_manager();

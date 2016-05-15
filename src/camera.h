@@ -11,6 +11,7 @@ typedef struct {
 
   float horizontalAngle;
   float verticalAngle;
+  float speed;
 } camera;
 
 void init_camera(camera *cam);

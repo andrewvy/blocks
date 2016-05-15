@@ -50,9 +50,11 @@ void generate_chunk_mesh(chunk *render_chunk) {
     neighbors[4] = (z - 1 < 0) ? 1 : render_chunk->blocks[i - CHUNK_X] == 0;
     neighbors[5] = (z + 1 >= CHUNK_Z) ? 1 : render_chunk->blocks[i + CHUNK_X] == 0;
 
+    uint8_t tiles[6] = {0, 0, 1, 0, 0, 0};
+
     vertices_count += create_cube_mesh(&buffer_pointer,
       neighbors[0], neighbors[1], neighbors[2], neighbors[3], neighbors[4], neighbors[5],
-      1, 1, 1, 1, 1, 1,
+      tiles[0], tiles[1], tiles[2], tiles[3], tiles[4], tiles[5],
       x, y, z, 0.5
     );
   }
@@ -178,25 +180,31 @@ int create_cube_mesh(
   };
 
   int faces[6] = {left, right, top, bottom, front, back};
+  int tiles[6] = {wleft, wright, wtop, wbottom, wfront, wback};
 
   // UV calculation based on texture size!
-  // TODO(vy): CHANGE THESE
-  GLfloat s = 0.3025;
-  GLfloat a = 0 + 1 / 2048.0;
-  GLfloat b = s - 1 / 2048.0;
+  int size_of_texture = 1024;
+  int size_of_tile = 32;
+  float normalized_tile_size = (float) size_of_tile / (float) size_of_texture;
+  float a = 0 + 1 / size_of_texture;
+  float b = normalized_tile_size - 1 / size_of_texture;
 
   // For each face, construct the mesh.
   for (int i = 0; i < 6; i++) {
     // Skip if face is missing.
     if (faces[i] == 0) continue;
 
+    // Calculate texture offset based on size of tile and id of tile.
+    float du = (tiles[i] % size_of_tile) * normalized_tile_size;
+    float dv = (tiles[i] / size_of_tile) * normalized_tile_size;
+
     for (int v = 0; v < 6; v++) {
       int j = indices[i][v];
       *((*data_pointer)++) = x + cube_size * vertices[i][j][0];
       *((*data_pointer)++) = y + cube_size * vertices[i][j][1];
       *((*data_pointer)++) = z + cube_size * vertices[i][j][2];
-      *((*data_pointer)++) = (uvs[i][j][0] ? b : a);
-      *((*data_pointer)++) = (uvs[i][j][1] ? b : a);
+      *((*data_pointer)++) = du + (uvs[i][j][0] ? b : a);
+      *((*data_pointer)++) = dv + (uvs[i][j][1] ? b : a);
       vertices_count++;
     }
   }
