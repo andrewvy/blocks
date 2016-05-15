@@ -13,6 +13,7 @@
 #include "camera.h"
 #include "chunk.h"
 #include "image.h"
+#include "player.h"
 
 #define MATH_3D_IMPLEMENTATION
 #include "third-party/math_3d.h"
@@ -99,7 +100,7 @@ static mat4_t Model;
 static mat4_t View;
 static mat4_t Projection;
 
-static camera Camera;
+static Player *player;
 
 static GLuint Texture;
 static GLuint TextureID;
@@ -132,7 +133,7 @@ int render_init() {
   glViewport(0, 0, width, height);
 
   // Initialize camera
-  init_camera(&Camera);
+  player = create_player();
 
   // Load the texture using any two methods
   Texture = loadPNGImage("assets/textures/blocks.png");
@@ -183,8 +184,8 @@ void render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Calculate camera and set View uniform.
-  recalculate_camera(&Camera);
-  mat4_t ProjectionView = m4_mul(Projection, Camera.matrix);
+  recalculate_player(player);
+  mat4_t ProjectionView = m4_mul(Projection, player->cam.matrix);
   GLint projection_view = glGetUniformLocation(program, "ProjectionView");
   glUniformMatrix4fv(projection_view, 1, GL_FALSE, (GLfloat *) &ProjectionView);
 
@@ -235,7 +236,7 @@ void render() {
   sprintf(gui_vertex_count, "Vertex Count: %2d", vertex_count);
   gui_vertex_count[255] = '\0';
 
-  sprintf(gui_camera_position, "Camera Position <x: %2.2f, y: %2.2f, z: %2.2f>", Camera.position.x, Camera.position.y, Camera.position.z);
+  sprintf(gui_camera_position, "Player Position <x: %2.2f, y: %2.2f, z: %2.2f>", player->position.x, player->position.y, player->position.z);
   gui_camera_position[255] = '\0';
 
   fonsSetColor(fontcontext, gl3fonsRGBA(255, 255, 255, 255)); // white
@@ -262,6 +263,7 @@ void render_quit() {
   glDeleteTextures(1, &TextureID);
 
   destroy_chunk_manager(ChunkManager);
+  destroy_player(player);
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();
@@ -280,15 +282,15 @@ void mouseInput(double time, float deltaTime) {
   glfwGetCursorPos(window, &xpos, &ypos);
   glfwSetCursorPos(window, WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
 
-  Camera.horizontalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_WIDTH/2 - floor(xpos)));
-  Camera.verticalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_HEIGHT/2 - floor(ypos)));
+  player->horizontalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_WIDTH/2 - floor(xpos)));
+  player->verticalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_HEIGHT/2 - floor(ypos)));
 }
 
 void keyInput(double time, float deltaTime) {
-  if (glfwGetKey(window, GLFW_KEY_A)) move_camera(&Camera, GLFW_KEY_A, deltaTime);
-  if (glfwGetKey(window, GLFW_KEY_D)) move_camera(&Camera, GLFW_KEY_D, deltaTime);
-  if (glfwGetKey(window, GLFW_KEY_W)) move_camera(&Camera, GLFW_KEY_W, deltaTime);
-  if (glfwGetKey(window, GLFW_KEY_S)) move_camera(&Camera, GLFW_KEY_S, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_A)) move_player(player, GLFW_KEY_A, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_D)) move_player(player, GLFW_KEY_D, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_W)) move_player(player, GLFW_KEY_W, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_S)) move_player(player, GLFW_KEY_S, deltaTime);
 }
 
 static double ongoingTime = 0.0;
