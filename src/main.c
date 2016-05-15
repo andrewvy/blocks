@@ -93,7 +93,8 @@ int video_init() {
 
 render_obj *render_objects[50];
 
-static chunk *Chunks[4];
+static chunk_manager *ChunkManager;
+
 static mat4_t Model;
 static mat4_t View;
 static mat4_t Projection;
@@ -136,17 +137,8 @@ int render_init() {
   // Load the texture using any two methods
   Texture = loadBMPImage("assets/textures/texture.bmp");
 
-  // Create chunk
-  Chunks[0] = create_chunk(0.0, 0.0);
-  Chunks[1] = create_chunk(0.0, -1.0);
-  Chunks[2] = create_chunk(-1.0, 0.0);
-  Chunks[3] = create_chunk(-1.0, -1.0);
-
-  // Generate cube mesh which has top of the block unrendered.
-  generate_chunk_mesh(Chunks[0]);
-  generate_chunk_mesh(Chunks[1]);
-  generate_chunk_mesh(Chunks[2]);
-  generate_chunk_mesh(Chunks[3]);
+  // Create Chunk Manager
+  ChunkManager = create_chunk_manager();
 
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 200.0f);
@@ -212,14 +204,12 @@ void render() {
   glUniform1i(TextureID, 0);
 
   // Render a render_obj
-  // TODO(vy): Store number of loaded chunks.
-  int CHUNK_COUNT = 4;
 
-  for (int i = 0; i < CHUNK_COUNT; i++) {
+  for (int i = 0; i < ChunkManager->number_of_loaded_chunks; i++) {
     if (BLOCKS_DEBUG) {
-      debug_render_chunk(program, Chunks[i]);
+      debug_render_chunk(program, &ChunkManager->loaded_chunks[i]);
     } else {
-      render_chunk(program, Chunks[i]);
+      render_chunk(program, &ChunkManager->loaded_chunks[i]);
     }
   }
 
@@ -231,8 +221,8 @@ void render() {
 
   // Render text
   int vertex_count = 0;
-  for (int i = 0; i < CHUNK_COUNT; i++) {
-    vertex_count += Chunks[i]->render_object->indices_count;
+  for (int i = 0; i < ChunkManager->number_of_loaded_chunks; i++) {
+    vertex_count += ChunkManager->loaded_chunks[i].render_object->indices_count;
   }
 
   gl3fonsProjection(fontcontext, mat);
@@ -240,6 +230,7 @@ void render() {
   char gui_title[] = "Blocks 0.0.1-dev";
   char gui_vertex_count[256];
   char gui_camera_position[256];
+  char gui_camera_rotation[256];
 
   sprintf(gui_vertex_count, "Vertex Count: %2d", vertex_count);
   gui_vertex_count[255] = '\0';
@@ -270,9 +261,7 @@ void render_quit() {
   glDeleteProgram(program);
   glDeleteTextures(1, &TextureID);
 
-  for (int i = 0; i < 4; i++) {
-    destroy_chunk(Chunks[i]);
-  }
+  destroy_chunk_manager(ChunkManager);
 
   // Close OpenGL window and terminate GLFW
   glfwTerminate();

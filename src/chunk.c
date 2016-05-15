@@ -1,4 +1,6 @@
 #include <GLFW/glfw3.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "third-party/math_3d.h"
 #include "chunk.h"
@@ -238,4 +240,46 @@ int destroy_chunk(chunk *render_chunk) {
   free(render_chunk);
 
   return 0;
+}
+
+void destroy_chunk_manager(chunk_manager *cm) {
+  for (int i = 0; i < cm->number_of_loaded_chunks; i++) {
+    destroy_chunk(&(cm->loaded_chunks[i]));
+  }
+
+  free(cm->loaded_chunks);
+  free(cm);
+}
+
+void chunk_manager_process(chunk_manager *chunk_m) {
+  if (chunk_m->number_of_loaded_chunks < chunk_m->chunk_boundary) {
+    chunk_m->loaded_chunks = malloc(sizeof(chunk) * LOADED_CHUNK_BOUNDARY);
+
+    int x = 0;
+    int z = 0;
+    for (int i = 0; i < LOADED_CHUNK_BOUNDARY; i++) {
+      chunk_m->loaded_chunks[i] = *create_chunk(x, z);
+      generate_chunk_mesh(&chunk_m->loaded_chunks[i]);
+      chunk_m->number_of_loaded_chunks++;
+
+      // TODO(vy): This is broken X/Z chunk placement. Fix me! ):
+      if (i % 2 == 0) {
+        x++;
+      }
+
+      if (i % 2 == 1) {
+        int temp = x;
+        x = z;
+        z = temp;
+      }
+    }
+  }
+}
+
+chunk_manager *create_chunk_manager() {
+  chunk_manager *chunk_m = malloc(sizeof(chunk_manager));
+  chunk_m->chunk_boundary = LOADED_CHUNK_BOUNDARY;
+  chunk_m->number_of_loaded_chunks = 0; chunk_manager_process(chunk_m);
+
+  return chunk_m;
 }
