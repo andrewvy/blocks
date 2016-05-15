@@ -54,14 +54,6 @@ void integrate_player(Player *player, float deltaTime) {
   vec3_t acceleration = vec3(0, -15.0, 0);
   float friction = 0.97;
 
-  if (player->position.y < 256) {
-    player->velocity = vec3(player->velocity.x, 0.0, player->velocity.z);
-    player->position.y = 256;
-    player->state = PLAYER_GROUNDED;
-  } else {
-    player->state = PLAYER_AIRBORNE;
-  }
-
   player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
 
   player->position = v3_add(player->position,
@@ -72,12 +64,22 @@ void integrate_player(Player *player, float deltaTime) {
       ),
       v3_muls(
         acceleration,
-        (0.5 * deltaTime * deltaTime)
+        (deltaTime * deltaTime)
       )
     )
   );
 
+  if (player->position.y <= 256) {
+    player->velocity = vec3(player->velocity.x, 0.0, player->velocity.z);
+    player->position.y = 256;
+    player->state = PLAYER_GROUNDED;
+  } else {
+    player->state = PLAYER_AIRBORNE;
+  }
+
   player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
+  player->state == PLAYER_GROUNDED ? player->velocity.y = 0.0 : player->velocity.y;
+  player->state == PLAYER_GROUNDED ? player->position.y = 256 : player->position.y;
 }
 
 void recalculate_player(Player *player) {
@@ -105,9 +107,9 @@ void recalculate_player(Player *player) {
 
 void move_player(Player *player, GLenum key, float deltaTime) {
   vec3_t direction = vec3(
-    cos(player->verticalAngle) * sin(player->horizontalAngle),
+    sin(player->horizontalAngle),
     0,
-    cos(player->verticalAngle) * cos(player->horizontalAngle)
+    cos(player->horizontalAngle)
   );
 
   vec3_t right = vec3(
