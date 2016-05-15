@@ -12,6 +12,7 @@ typedef struct {
   vec3_t position;
   float speed; // Fixed movement speed
   vec3_t velocity;
+  float jumpHeight; // Fixed jump height
 
   camera cam;
   float horizontalAngle;

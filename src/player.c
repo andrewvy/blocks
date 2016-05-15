@@ -13,13 +13,15 @@ Player *create_player() {
 
   player->cam = *create_camera();
 
-  player->speed = 10.0f;
+  player->speed = 5.0f;
+  player->jumpHeight = 5.0f;
+
   player->horizontalAngle = 0.60f;
   player->verticalAngle = -0.15f;
 
-  player->position.x = -5;
+  player->position.x = 15;
   player->position.y = 260;
-  player->position.z = -5;
+  player->position.z = 15;
 
   player->velocity.x = 0.0;
   player->velocity.y = 0.0;
@@ -49,8 +51,16 @@ static vec3_t oldPosition;
 static float oldSpeed = 0.0;
 
 void integrate_player(Player *player, float deltaTime) {
-  vec3_t acceleration = vec3(0, -1.0, 0);
-  float friction = 0.98;
+  vec3_t acceleration = vec3(0, -15.0, 0);
+  float friction = 0.97;
+
+  if (player->position.y < 256) {
+    player->velocity = vec3(player->velocity.x, 0.0, player->velocity.z);
+    player->position.y = 256;
+    player->state = PLAYER_GROUNDED;
+  } else {
+    player->state = PLAYER_AIRBORNE;
+  }
 
   player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
 
@@ -68,14 +78,6 @@ void integrate_player(Player *player, float deltaTime) {
   );
 
   player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
-
-  if (player->position.y < 256) {
-    player->velocity = vec3(player->velocity.x, 0.0, player->velocity.z);
-    player->position.y = 256;
-    player->state = PLAYER_GROUNDED;
-  } else {
-    player->state = PLAYER_AIRBORNE;
-  }
 }
 
 void recalculate_player(Player *player) {
@@ -104,7 +106,7 @@ void recalculate_player(Player *player) {
 void move_player(Player *player, GLenum key, float deltaTime) {
   vec3_t direction = vec3(
     cos(player->verticalAngle) * sin(player->horizontalAngle),
-    sin(player->verticalAngle),
+    0,
     cos(player->verticalAngle) * cos(player->horizontalAngle)
   );
 
@@ -115,10 +117,10 @@ void move_player(Player *player, GLenum key, float deltaTime) {
   );
 
   vec3_t scaled_direction = v3_muls(direction, deltaTime);
-  scaled_direction = v3_muls(scaled_direction, player->speed);
+  scaled_direction = v3_muls(scaled_direction, player->speed * 4);
 
   vec3_t scaled_right = v3_muls(right, deltaTime);
-  scaled_right = v3_muls(scaled_right, player->speed);
+  scaled_right = v3_muls(scaled_right, player->speed * 4);
 
   switch (key) {
     case GLFW_KEY_A:
@@ -135,7 +137,15 @@ void move_player(Player *player, GLenum key, float deltaTime) {
       break;
     case GLFW_KEY_SPACE:
       if (player->state == PLAYER_GROUNDED)
-        player->velocity = vec3(player->velocity.x, player->velocity.y + player->speed, player->velocity.z);
+        player->velocity = vec3(player->velocity.x, player->velocity.y + (player->speed * 1.5), player->velocity.z);
       break;
+  }
+
+  if (player->velocity.x > player->speed) {
+    player->velocity.x = player->speed;
+  }
+
+  if (player->velocity.z > player->speed) {
+    player->velocity.z = player->speed;
   }
 }
