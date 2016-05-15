@@ -2,10 +2,16 @@
 
 #include "camera.h"
 
-typedef struct {
-  vec3_t position;
+typedef enum {
+  PLAYER_GROUNDED,
+  PLAYER_AIRBORNE
+} PlayerState;
 
-  float speed;
+typedef struct {
+  PlayerState state;
+  vec3_t position;
+  float speed; // Fixed movement speed
+  vec3_t velocity;
 
   camera cam;
   float horizontalAngle;
@@ -16,5 +22,6 @@ typedef struct {
 
 Player *create_player();
 void destroy_player(Player *player);
+void integrate_player(Player *player, float deltaTime);
 void recalculate_player(Player *player);
 void move_player(Player *player, GLenum key, float deltaTime);

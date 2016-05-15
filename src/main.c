@@ -299,6 +299,7 @@ void keyInput(double time, float deltaTime) {
   if (glfwGetKey(window, GLFW_KEY_D)) move_player(player, GLFW_KEY_D, deltaTime);
   if (glfwGetKey(window, GLFW_KEY_W)) move_player(player, GLFW_KEY_W, deltaTime);
   if (glfwGetKey(window, GLFW_KEY_S)) move_player(player, GLFW_KEY_S, deltaTime);
+  if (glfwGetKey(window, GLFW_KEY_SPACE)) move_player(player, GLFW_KEY_SPACE, deltaTime);
 }
 
 static double ongoingTime = 0.0;
@@ -331,6 +332,7 @@ int main(void) {
 
       mouseInput(ongoingTime, deltaTime);
       keyInput(ongoingTime, deltaTime);
+      integrate_player(player, deltaTime);
 
       frameTime -= deltaTime;
       ongoingTime += deltaTime;

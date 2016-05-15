@@ -9,6 +9,8 @@
 
 Player *create_player() {
   Player *player = malloc(sizeof(Player));
+  player->state = PLAYER_AIRBORNE;
+
   player->cam = *create_camera();
 
   player->speed = 10.0f;
@@ -18,6 +20,10 @@ Player *create_player() {
   player->position.x = -5;
   player->position.y = 260;
   player->position.z = -5;
+
+  player->velocity.x = 0.0;
+  player->velocity.y = 0.0;
+  player->velocity.z = 0.0;
 
   player->chunk_position.x = 0;
   player->chunk_position.y = 0;
@@ -41,6 +47,36 @@ static float oldVerticalAngle = 0.0;
 static float oldHorizontalAngle = 0.0;
 static vec3_t oldPosition;
 static float oldSpeed = 0.0;
+
+void integrate_player(Player *player, float deltaTime) {
+  vec3_t acceleration = vec3(0, -1.0, 0);
+  float friction = 0.98;
+
+  player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
+
+  player->position = v3_add(player->position,
+    v3_add(
+      v3_muls(
+        player->velocity,
+        deltaTime
+      ),
+      v3_muls(
+        acceleration,
+        (0.5 * deltaTime * deltaTime)
+      )
+    )
+  );
+
+  player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
+
+  if (player->position.y < 256) {
+    player->velocity = vec3(player->velocity.x, 0.0, player->velocity.z);
+    player->position.y = 256;
+    player->state = PLAYER_GROUNDED;
+  } else {
+    player->state = PLAYER_AIRBORNE;
+  }
+}
 
 void recalculate_player(Player *player) {
   // Only recalculate if values have changed.
@@ -86,16 +122,20 @@ void move_player(Player *player, GLenum key, float deltaTime) {
 
   switch (key) {
     case GLFW_KEY_A:
-      player->position = v3_sub(player->position, scaled_right);
+      player->velocity = v3_sub(player->velocity, scaled_right);
       break;
     case GLFW_KEY_D:
-      player->position = v3_add(player->position, scaled_right);
+      player->velocity = v3_add(player->velocity, scaled_right);
       break;
     case GLFW_KEY_W:
-      player->position = v3_add(player->position, scaled_direction);
+      player->velocity = v3_add(player->velocity, scaled_direction);
       break;
     case GLFW_KEY_S:
-      player->position = v3_sub(player->position, scaled_direction);
+      player->velocity = v3_sub(player->velocity, scaled_direction);
+      break;
+    case GLFW_KEY_SPACE:
+      if (player->state == PLAYER_GROUNDED)
+        player->velocity = vec3(player->velocity.x, player->velocity.y + player->speed, player->velocity.z);
       break;
   }
 }
