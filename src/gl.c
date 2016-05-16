@@ -44,7 +44,7 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *buffer_data, int
   obj->transform = m4_identity();
 
   // Create VBO
-  obj->buffers[0] = make_buffer(GL_ARRAY_BUFFER, buffer_size, buffer_data);
+  obj->vbo = make_buffer(GL_ARRAY_BUFFER, buffer_size, buffer_data);
 
   return obj;
 }
@@ -52,7 +52,6 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *buffer_data, int
 int destroy_render_obj(render_obj *obj) {
   glBindVertexArray(obj->vao_id);
   glDeleteVertexArrays(1, &(obj->vao_id));
-  glDeleteBuffers(1, &(obj->buffers));
 
   free(obj);
 

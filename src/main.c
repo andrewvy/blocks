@@ -188,6 +188,7 @@ void render_gui() {
   char gui_title[] = "Blocks 0.0.1-dev";
   char gui_vertex_count[256];
   char gui_player_position[256];
+  char gui_player_look[256];
   char gui_player_velocity[256];
   char gui_chunk_position[256];
 
@@ -196,6 +197,9 @@ void render_gui() {
 
   sprintf(gui_player_position, "Player Position <x: %2.2f, y: %2.2f, z: %2.2f>", player->position.x, player->position.y, player->position.z);
   gui_player_position[255] = '\0';
+
+  sprintf(gui_player_look, "Player Look <Vertical: %2.2f, Horizontal: %2.2f>", player->verticalAngle, player->horizontalAngle);
+  gui_player_look[255] = '\0';
 
   sprintf(gui_player_velocity, "Player Velocity <x: %2.2f, y: %2.2f, z: %2.2f>", player->velocity.x, player->velocity.y, player->velocity.z);
   gui_player_velocity[255] = '\0';
@@ -207,13 +211,14 @@ void render_gui() {
   fonsDrawText(fontcontext, 10.0f, 10.0f, gui_title, NULL);
   fonsDrawText(fontcontext, 10.0f, 40.0f, gui_vertex_count, NULL);
   fonsDrawText(fontcontext, 10.0f, 70.0f, gui_player_position, NULL);
-  fonsDrawText(fontcontext, 10.0f, 100.0f, gui_player_velocity, NULL);
-  fonsDrawText(fontcontext, 10.0f, 130.0f, gui_chunk_position, NULL);
+  fonsDrawText(fontcontext, 10.0f, 100.0f, gui_player_look, NULL);
+  fonsDrawText(fontcontext, 10.0f, 130.0f, gui_player_velocity, NULL);
+  fonsDrawText(fontcontext, 10.0f, 160.0f, gui_chunk_position, NULL);
 
   if (BLOCKS_DEBUG) {
     char gui_debug_mode[] = "DEBUG MODE ON";
     fonsSetColor(fontcontext, gl3fonsRGBA(250, 85, 85, 255));
-    fonsDrawText(fontcontext, 10.0f, 160.0f, gui_debug_mode, NULL);
+    fonsDrawText(fontcontext, 10.0f, 190.0f, gui_debug_mode, NULL);
   }
 }
 

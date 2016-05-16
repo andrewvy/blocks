@@ -34,26 +34,39 @@ void upload_chunk_mesh(chunk *render_chunk, GLfloat *buffer, int vertices_count)
   // Bind Vertices
   apply_render_obj_attribute(
     render_chunk->render_object,                // Render Object
-    render_chunk->render_object->buffers[0],    // ID of the VBO
+    render_chunk->render_object->vbo,    // ID of the VBO
     GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
     0,                                // Attribute Index of the VAO
     3,                                // Number of Elements
     GL_FLOAT,                         // Type of Element (GL_FLOAT)
     GL_FALSE,                         // Whether this is normalized?
-    (sizeof(GLfloat) * 5),
+    (sizeof(GLfloat) * 8),
     0                                 // Pointer to the offset (void pointer)
+  );
+
+  // Bind Vertices
+  apply_render_obj_attribute(
+    render_chunk->render_object,                // Render Object
+    render_chunk->render_object->vbo,    // ID of the VBO
+    GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
+    1,                                // Attribute Index of the VAO
+    3,                                // Number of Elements
+    GL_FLOAT,                         // Type of Element (GL_FLOAT)
+    GL_FALSE,                         // Whether this is normalized?
+    (sizeof(GLfloat) * 8),
+    (GLvoid *) (sizeof(GLfloat) * 3)  // Pointer to the offset (void pointer)
   );
 
   apply_render_obj_attribute(
     render_chunk->render_object,                // Render Object
-    render_chunk->render_object->buffers[0],    // ID of the VBO
+    render_chunk->render_object->vbo,    // ID of the VBO
     GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
-    1,                                // Attribute Index of the VAO
+    2,                                // Attribute Index of the VAO
     2,                                // Number of Elements
     GL_FLOAT,                         // Type of Element (GL_FLOAT)
     GL_FALSE,                         // Whether this is normalized?
-    (sizeof(GLfloat) * 5),
-    (GLvoid *) (sizeof(GLfloat) * 3)  // Pointer to the offset (void pointer)
+    (sizeof(GLfloat) * 8),
+    (GLvoid *) (sizeof(GLfloat) * 6)  // Pointer to the offset (void pointer)
   );
 
   render_chunk->render_object->transform = m4_transpose(
@@ -68,7 +81,7 @@ void upload_chunk_mesh(chunk *render_chunk, GLfloat *buffer, int vertices_count)
 }
 
 void generate_chunk_mesh(chunk *render_chunk) {
-  GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 6 * 5) * CHUNK_SIZE);
+  GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 6 * 8) * CHUNK_SIZE);
   GLfloat *buffer_pointer = buffer;
   int vertices_count = 0;
 
@@ -110,7 +123,7 @@ void generate_chunk_mesh(chunk *render_chunk) {
   // the largest size, but during mesh creation, we could have
   // omitted faces, causing the buffer to be smaller than the
   // maximum size.
-  buffer = realloc(buffer, (sizeof(GLfloat) * vertices_count * 5));
+  buffer = realloc(buffer, (sizeof(GLfloat) * vertices_count * 8));
 
   upload_chunk_mesh(render_chunk, buffer, vertices_count);
 
@@ -208,6 +221,9 @@ int create_cube_mesh(
       *((*data_pointer)++) = x + cube_size * vertices[i][j][0];
       *((*data_pointer)++) = y + cube_size * vertices[i][j][1];
       *((*data_pointer)++) = z + cube_size * vertices[i][j][2];
+      *((*data_pointer)++) = normals[i][0];
+      *((*data_pointer)++) = normals[i][1];
+      *((*data_pointer)++) = normals[i][2];
       *((*data_pointer)++) = du + (uvs[i][j][0] ? b : a);
       *((*data_pointer)++) = dv + (uvs[i][j][1] ? b : a);
       vertices_count++;

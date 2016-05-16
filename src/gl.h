@@ -11,7 +11,7 @@ typedef struct {
 	mat4_t transform;
   GLenum mode; // GL_TRIANGLES
   GLuint indices_count; // Number of indices to draw
-  GLuint buffers[16];
+  GLuint vbo;
 
   size_t size;
 } render_obj;
