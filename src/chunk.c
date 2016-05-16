@@ -5,6 +5,7 @@
 #include "third-party/math_3d.h"
 #include "chunk.h"
 #include "gl.h"
+#include "player.h"
 
 chunk *create_chunk(GLfloat x, GLfloat z) {
   chunk *new_chunk = malloc(sizeof(chunk));
@@ -112,6 +113,8 @@ void generate_chunk_mesh(chunk *render_chunk) {
   buffer = realloc(buffer, (sizeof(GLfloat) * vertices_count * 5));
 
   upload_chunk_mesh(render_chunk, buffer, vertices_count);
+
+  free(buffer);
 }
 
 // Graciously inspired via https://github.com/fogleman/Craft/blob/master/src/cube.c#L7
@@ -254,42 +257,38 @@ int destroy_chunk(chunk *render_chunk) {
 
 void destroy_chunk_manager(chunk_manager *cm) {
   for (int i = 0; i < cm->number_of_loaded_chunks; i++) {
-    destroy_chunk(&(cm->loaded_chunks[i]));
+    destroy_chunk(cm->loaded_chunks[i]);
   }
 
   free(cm->loaded_chunks);
   free(cm);
 }
 
-void chunk_manager_process(chunk_manager *chunk_m) {
-  if (chunk_m->number_of_loaded_chunks < chunk_m->chunk_boundary) {
-    chunk_m->loaded_chunks = malloc(sizeof(chunk) * LOADED_CHUNK_BOUNDARY);
+static float chunk_border_x = 0;
+static float chunk_border_z = 0;
 
-    int x = 0;
-    int z = 0;
-    for (int i = 0; i < LOADED_CHUNK_BOUNDARY; i++) {
-      chunk_m->loaded_chunks[i] = *create_chunk(x, z);
-      generate_chunk_mesh(&chunk_m->loaded_chunks[i]);
-      chunk_m->number_of_loaded_chunks++;
+void chunk_manager_process(chunk_manager *chunk_m, Player *player) {
+  if (chunk_border_x != player->chunk_position.x ||
+      chunk_border_z != player->chunk_position.z) {
 
-      // TODO(vy): This is broken X/Z chunk placement. Fix me! ):
-      if (i % 2 == 0) {
-        x++;
-      }
-
-      if (i % 2 == 1) {
-        int temp = x;
-        x = z;
-        z = temp;
-      }
+    if (chunk_m->number_of_loaded_chunks > 0) {
+      destroy_chunk(chunk_m->loaded_chunks[0]);
     }
+
+    chunk_m->loaded_chunks[0] = create_chunk(player->chunk_position.x, player->chunk_position.z);
+    generate_chunk_mesh(chunk_m->loaded_chunks[0]);
+    chunk_m->number_of_loaded_chunks = 1;
+
+    chunk_border_x = player->chunk_position.x;
+    chunk_border_z = player->chunk_position.z;
   }
 }
 
 chunk_manager *create_chunk_manager() {
   chunk_manager *chunk_m = malloc(sizeof(chunk_manager));
   chunk_m->chunk_boundary = LOADED_CHUNK_BOUNDARY;
-  chunk_m->number_of_loaded_chunks = 0; chunk_manager_process(chunk_m);
+  chunk_m->number_of_loaded_chunks = 0;
+  chunk_m->loaded_chunks = malloc(sizeof(chunk *));
 
   return chunk_m;
 }

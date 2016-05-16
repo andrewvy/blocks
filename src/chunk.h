@@ -4,6 +4,7 @@
 
 #include "third-party/math_3d.h"
 #include "gl.h"
+#include "player.h"
 
 #define CHUNK_X 16
 #define CHUNK_Z 16
@@ -19,7 +20,7 @@ typedef struct {
 } chunk;
 
 typedef struct {
-  chunk *loaded_chunks;
+  chunk **loaded_chunks;
   int chunk_boundary;
   int number_of_loaded_chunks;
 } chunk_manager;
@@ -38,4 +39,5 @@ void debug_render_chunk(GLuint program, chunk *render_chunk);
 int destroy_chunk(chunk *render_chunk);
 
 chunk_manager *create_chunk_manager();
+void chunk_manager_process(chunk_manager *cm, Player *player);
 void destroy_chunk_manager(chunk_manager *cm);

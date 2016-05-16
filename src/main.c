@@ -178,8 +178,9 @@ static unsigned char BLOCKS_DEBUG = 0;
 
 void render_gui() {
   int vertex_count = 0;
+
   for (int i = 0; i < ChunkManager->number_of_loaded_chunks; i++) {
-    vertex_count += ChunkManager->loaded_chunks[i].render_object->indices_count;
+    vertex_count += ChunkManager->loaded_chunks[0]->render_object->indices_count;
   }
 
   gl3fonsProjection(fontcontext, mat);
@@ -248,9 +249,9 @@ void render() {
 
   for (int i = 0; i < ChunkManager->number_of_loaded_chunks; i++) {
     if (BLOCKS_DEBUG) {
-      debug_render_chunk(program, &ChunkManager->loaded_chunks[i]);
+      debug_render_chunk(program, ChunkManager->loaded_chunks[i]);
     } else {
-      render_chunk(program, &ChunkManager->loaded_chunks[i]);
+      render_chunk(program, ChunkManager->loaded_chunks[i]);
     }
   }
 
@@ -343,6 +344,7 @@ int main(void) {
       ongoingTime += deltaTime;
     }
 
+    chunk_manager_process(ChunkManager, player);
     render();
     glfwPollEvents();
   }

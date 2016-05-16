@@ -29,7 +29,6 @@ int apply_render_obj_attribute(render_obj *obj, GLuint vbo_id, GLenum buffer_typ
 
 render_obj *create_render_obj(const GLenum mode, const GLfloat *buffer_data, int buffer_count, int indices_count) {
   render_obj *obj = malloc(sizeof(render_obj));
-
   size_t buffer_size = sizeof(GLfloat) * buffer_count;
 
   // Create VAO
@@ -53,6 +52,7 @@ render_obj *create_render_obj(const GLenum mode, const GLfloat *buffer_data, int
 int destroy_render_obj(render_obj *obj) {
   glBindVertexArray(obj->vao_id);
   glDeleteVertexArrays(1, &(obj->vao_id));
+  glDeleteBuffers(1, &(obj->buffers));
 
   free(obj);
 
