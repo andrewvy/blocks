@@ -6,8 +6,8 @@ uniform sampler2D fragTexture;
 in vec4 outPosition;
 in vec2 UV;
 
-out vec3 color;
+out vec4 color;
 
 void main() {
-  color = texture(fragTexture, UV).rgb;
+  color = texture(fragTexture, UV);
 }

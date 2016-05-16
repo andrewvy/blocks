@@ -188,8 +188,8 @@ int create_cube_mesh(
   int size_of_texture = 1024;
   int size_of_tile = 32;
   float normalized_tile_size = (float) size_of_tile / (float) size_of_texture;
-  float a = 0 + 1 / size_of_texture;
-  float b = normalized_tile_size - 1 / size_of_texture;
+  float a = 0 + (1 / size_of_texture);
+  float b = normalized_tile_size - (1 / size_of_texture);
 
   // For each face, construct the mesh.
   for (int i = 0; i < 6; i++) {

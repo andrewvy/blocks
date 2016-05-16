@@ -13,7 +13,7 @@ Player *create_player() {
 
   player->cam = *create_camera();
 
-  player->speed = 5.0f;
+  player->speed = 10.0f;
   player->jumpHeight = 5.0f;
 
   player->horizontalAngle = 0.60f;
@@ -52,7 +52,7 @@ static float oldSpeed = 0.0;
 
 void integrate_player(Player *player, float deltaTime) {
   vec3_t acceleration = vec3(0, -15.0, 0);
-  float friction = 0.97;
+  float friction = 0.94;
 
   player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
 
@@ -69,9 +69,9 @@ void integrate_player(Player *player, float deltaTime) {
     )
   );
 
-  if (player->position.y <= 256) {
+  if (player->position.y <= 257) {
     player->velocity = vec3(player->velocity.x, 0.0, player->velocity.z);
-    player->position.y = 256;
+    player->position.y = 257;
     player->state = PLAYER_GROUNDED;
   } else {
     player->state = PLAYER_AIRBORNE;
@@ -79,7 +79,6 @@ void integrate_player(Player *player, float deltaTime) {
 
   player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
   player->state == PLAYER_GROUNDED ? player->velocity.y = 0.0 : player->velocity.y;
-  player->state == PLAYER_GROUNDED ? player->position.y = 256 : player->position.y;
 }
 
 void recalculate_player(Player *player) {
@@ -139,7 +138,7 @@ void move_player(Player *player, GLenum key, float deltaTime) {
       break;
     case GLFW_KEY_SPACE:
       if (player->state == PLAYER_GROUNDED)
-        player->velocity = vec3(player->velocity.x, player->velocity.y + (player->speed * 1.5), player->velocity.z);
+        player->velocity = vec3(player->velocity.x, player->velocity.y + (player->jumpHeight * 1.5), player->velocity.z);
       break;
   }
 
