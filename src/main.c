@@ -202,18 +202,19 @@ void render_gui() {
   sprintf(gui_chunk_position, "Chunk Position <x: %2.2f, z: %2.2f>", player->chunk_position.x, player->chunk_position.z);
   gui_player_position[255] = '\0';
 
-  fonsSetColor(fontcontext, gl3fonsRGBA(255, 255, 255, 255)); // white
+  fonsSetColor(fontcontext, gl3fonsRGBA(0, 0, 0, 255)); // white
+
   fonsDrawText(fontcontext, 10.0f, 10.0f, gui_title, NULL);
-  fonsDrawText(fontcontext, 10.0f, 40.0f, gui_vertex_count, NULL);
-  fonsDrawText(fontcontext, 10.0f, 70.0f, gui_player_position, NULL);
-  fonsDrawText(fontcontext, 10.0f, 100.0f, gui_player_look, NULL);
-  fonsDrawText(fontcontext, 10.0f, 130.0f, gui_player_velocity, NULL);
-  fonsDrawText(fontcontext, 10.0f, 160.0f, gui_chunk_position, NULL);
+  fonsDrawText(fontcontext, 10.0f, 25.0f, gui_vertex_count, NULL);
+  fonsDrawText(fontcontext, 10.0f, 40.0f, gui_player_position, NULL);
+  fonsDrawText(fontcontext, 10.0f, 55.0f, gui_player_look, NULL);
+  fonsDrawText(fontcontext, 10.0f, 70.0f, gui_player_velocity, NULL);
+  fonsDrawText(fontcontext, 10.0f, 85.0f, gui_chunk_position, NULL);
 
   if (BLOCKS_DEBUG) {
     char gui_debug_mode[] = "DEBUG MODE ON";
     fonsSetColor(fontcontext, gl3fonsRGBA(250, 85, 85, 255));
-    fonsDrawText(fontcontext, 10.0f, 190.0f, gui_debug_mode, NULL);
+    fonsDrawText(fontcontext, 10.0f, 100.0f, gui_debug_mode, NULL);
   }
 }
 

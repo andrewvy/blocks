@@ -109,7 +109,7 @@ void generate_chunk_mesh(chunk *render_chunk) {
     neighbors[4] = (z - 1 < 0) ? 1 : render_chunk->blocks[i - CHUNK_X] == 0;
     neighbors[5] = (z + 1 >= CHUNK_Z) ? 1 : render_chunk->blocks[i + CHUNK_X] == 0;
 
-    uint8_t tiles[6] = {0, 0, 1, 0, 0, 0};
+    uint8_t tiles[6] = {1, 1, 1, 1, 1, 1};
 
     vertices_count += create_cube_mesh(&buffer_pointer,
       neighbors[0], neighbors[1], neighbors[2], neighbors[3], neighbors[4], neighbors[5],
@@ -231,15 +231,10 @@ uint8_t block_from_index(chunk *render_chunk, uint32_t index) {
 }
 
 uint32_t index_from_block(uint16_t x, uint16_t y, uint16_t z) {
-  // uint modx = x % SIZEX;
-  // uint mody = y % SIZEY;
-  // uint modz = z % SIZEZ;
-
-  // return (modz * SIZEXY) + (modx * SIZEY) + mody;
-
   uint32_t x_length = CHUNK_X;
   uint32_t z_length = CHUNK_Z;
   uint32_t y_length = CHUNK_Y;
+
   if (x > x_length) x = x_length;
   if (y > y_length) y = y_length;
   if (z > z_length) z = z_length;
