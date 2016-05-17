@@ -6,7 +6,7 @@
 #define DEGREES(radians) ((radians) * 180 / PI)
 #define RADIANS(degrees) ((degrees) * PI / 180)
 
-GLuint make_buffer(GLenum target, GLsizei size, const void *data);
+GLuint make_buffer(GLenum target, GLsizei size, void *data);
 GLuint make_shader(GLenum type, const char *source);
 GLuint load_shader(GLenum type, const char *path);
 GLuint make_program(GLuint shader1, GLuint shader2);

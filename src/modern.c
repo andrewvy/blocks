@@ -15,11 +15,11 @@ char *load_file(const char *path) {
   return data;
 }
 
-GLuint make_buffer(GLenum target, GLsizei size, const void *data) {
+GLuint make_buffer(GLenum target, GLsizei size, void *data) {
   GLuint buffer;
   glGenBuffers(1, &buffer);
   glBindBuffer(target, buffer);
-  glBufferData(target, size, data, GL_STATIC_DRAW);
+  glBufferData(target, size, data, GL_DYNAMIC_DRAW);
 
   return buffer;
 }

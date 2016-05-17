@@ -165,7 +165,7 @@ int render_init() {
   fontcontext = gl3fonsCreate(1024, 1024, FONS_ZERO_TOPLEFT);
   SourceCodeProRegular = fonsAddFont(fontcontext, "sans", "assets/fonts/SourceCodePro-Regular.ttf");
 
-  fonsSetSize(fontcontext, 36.0f); // 16 point font
+  fonsSetSize(fontcontext, 16.0f); // 16 point font
   fonsSetAlign(fontcontext, FONS_ALIGN_LEFT | FONS_ALIGN_TOP); // left/top aligned
   fonsVertMetrics(fontcontext, NULL, NULL, &lineHeight);
 

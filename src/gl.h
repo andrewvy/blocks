@@ -8,7 +8,7 @@
 typedef struct {
   GLuint vao_id;
 
-	mat4_t transform;
+  mat4_t transform;
   GLenum mode; // GL_TRIANGLES
   GLuint indices_count; // Number of indices to draw
   GLuint vbo;
