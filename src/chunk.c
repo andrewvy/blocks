@@ -7,6 +7,9 @@
 #include "gl.h"
 #include "player.h"
 
+#define FLOATS_PER_VERTEX 8
+#define FLOATS_PER_VOXEL FLOATS_PER_VERTEX * 6 * 6
+
 chunk *create_chunk(GLfloat x, GLfloat z) {
   chunk *new_chunk = calloc(1, sizeof(chunk));
   new_chunk->blocks = (uint8_t *) calloc(1, sizeof(uint8_t) * CHUNK_SIZE);
@@ -16,6 +19,11 @@ chunk *create_chunk(GLfloat x, GLfloat z) {
     new_chunk->blocks[i] = 1;
   }
 
+  // FOR TESTING AIR BLOCKS.
+  new_chunk->blocks[65355] = 0;
+  new_chunk->blocks[65335] = 0;
+  new_chunk->blocks[65305] = 0;
+
   new_chunk->x = x;
   new_chunk->z = z;
 
@@ -23,18 +31,17 @@ chunk *create_chunk(GLfloat x, GLfloat z) {
 }
 
 void upload_chunk_mesh(chunk *render_chunk, GLfloat *buffer, int vertices_count) {
-  // 6 vertices per face * NUMBER OF FACES
   render_chunk->render_object = create_render_obj(
     GL_TRIANGLES,
     buffer,
-    (6 * 6 * 5) * CHUNK_SIZE,
+    (FLOATS_PER_VOXEL) * CHUNK_SIZE,
     vertices_count
   );
 
   // Bind Vertices
   apply_render_obj_attribute(
-    render_chunk->render_object,                // Render Object
-    render_chunk->render_object->vbo,    // ID of the VBO
+    render_chunk->render_object,      // Render Object
+    render_chunk->render_object->vbo, // ID of the VBO
     GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
     0,                                // Attribute Index of the VAO
     3,                                // Number of Elements
@@ -46,8 +53,8 @@ void upload_chunk_mesh(chunk *render_chunk, GLfloat *buffer, int vertices_count)
 
   // Bind Vertices
   apply_render_obj_attribute(
-    render_chunk->render_object,                // Render Object
-    render_chunk->render_object->vbo,    // ID of the VBO
+    render_chunk->render_object,      // Render Object
+    render_chunk->render_object->vbo, // ID of the VBO
     GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
     1,                                // Attribute Index of the VAO
     3,                                // Number of Elements
@@ -58,8 +65,8 @@ void upload_chunk_mesh(chunk *render_chunk, GLfloat *buffer, int vertices_count)
   );
 
   apply_render_obj_attribute(
-    render_chunk->render_object,                // Render Object
-    render_chunk->render_object->vbo,    // ID of the VBO
+    render_chunk->render_object,      // Render Object
+    render_chunk->render_object->vbo, // ID of the VBO
     GL_ARRAY_BUFFER,                  // Type of Buffer (GL_ARRAY_BUFFER)
     2,                                // Attribute Index of the VAO
     2,                                // Number of Elements
@@ -81,7 +88,7 @@ void upload_chunk_mesh(chunk *render_chunk, GLfloat *buffer, int vertices_count)
 }
 
 void generate_chunk_mesh(chunk *render_chunk) {
-  GLfloat *buffer = malloc(sizeof(GLfloat) * (6 * 6 * 8) * CHUNK_SIZE);
+  GLfloat *buffer = malloc(sizeof(GLfloat) * (FLOATS_PER_VOXEL) * CHUNK_SIZE);
   GLfloat *buffer_pointer = buffer;
   int vertices_count = 0;
 
@@ -90,7 +97,7 @@ void generate_chunk_mesh(chunk *render_chunk) {
     int z = (i / CHUNK_X) % CHUNK_Z;
     int y = i / (CHUNK_X * CHUNK_Z);
 
-    uint8_t block = render_chunk->blocks[i];
+    if (render_chunk->blocks[i] == 0) continue;
 
     // left(-x), right(+x), top(+y), bottom(-y), front(-z), back(+z)
     uint8_t neighbors[6] = {1, 1, 1, 1, 1, 1};
@@ -109,7 +116,7 @@ void generate_chunk_mesh(chunk *render_chunk) {
     neighbors[4] = (z - 1 < 0) ? 1 : render_chunk->blocks[i - CHUNK_X] == 0;
     neighbors[5] = (z + 1 >= CHUNK_Z) ? 1 : render_chunk->blocks[i + CHUNK_X] == 0;
 
-    uint8_t tiles[6] = {1, 1, 1, 1, 1, 1};
+    uint8_t tiles[6] = {0, 0, 1, 0, 0, 0};
 
     vertices_count += create_cube_mesh(&buffer_pointer,
       neighbors[0], neighbors[1], neighbors[2], neighbors[3], neighbors[4], neighbors[5],
