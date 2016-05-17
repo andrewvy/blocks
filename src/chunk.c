@@ -8,7 +8,7 @@
 #include "player.h"
 
 chunk *create_chunk(GLfloat x, GLfloat z) {
-  chunk *new_chunk = malloc(sizeof(chunk));
+  chunk *new_chunk = calloc(1, sizeof(chunk));
   new_chunk->blocks = (uint8_t *) calloc(1, sizeof(uint8_t) * CHUNK_SIZE);
 
   // Sets all blocks to a non-air type. (1)
@@ -117,13 +117,6 @@ void generate_chunk_mesh(chunk *render_chunk) {
       x, y, z, 0.5
     );
   }
-
-
-  // Resize the mesh buffer to the actual size, since we allocated
-  // the largest size, but during mesh creation, we could have
-  // omitted faces, causing the buffer to be smaller than the
-  // maximum size.
-  buffer = realloc(buffer, (sizeof(GLfloat) * vertices_count * 8));
 
   upload_chunk_mesh(render_chunk, buffer, vertices_count);
 
@@ -301,10 +294,10 @@ void chunk_manager_process(chunk_manager *chunk_m, Player *player) {
 }
 
 chunk_manager *create_chunk_manager() {
-  chunk_manager *chunk_m = malloc(sizeof(chunk_manager));
+  chunk_manager *chunk_m = calloc(1, sizeof(chunk_manager));
   chunk_m->chunk_boundary = LOADED_CHUNK_BOUNDARY;
   chunk_m->number_of_loaded_chunks = 0;
-  chunk_m->loaded_chunks = malloc(sizeof(chunk *));
+  chunk_m->loaded_chunks = calloc(1, sizeof(chunk *));
 
   return chunk_m;
 }

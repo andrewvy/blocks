@@ -95,13 +95,8 @@ int video_init() {
 render_obj *render_objects[50];
 
 static chunk_manager *ChunkManager;
-
-static mat4_t Model;
-static mat4_t View;
 static mat4_t Projection;
-
 static Player *player;
-
 static GLuint Texture;
 static GLuint TextureID;
 
