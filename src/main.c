@@ -112,7 +112,7 @@ int render_init() {
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // Dark blue background
-  glClearColor(0.45f, 0.45f, 0.8f, 1.0f);
+  glClearColor(0.88f, 0.89f, 0.83f, 1.0f);
 
   // Create and compile our GLSL program from the shaders
   GLuint vertex_shader = load_shader(GL_VERTEX_SHADER, "assets/shaders/vertex.sl");
@@ -230,6 +230,10 @@ void render() {
   mat4_t ProjectionView = m4_mul(Projection, player->cam.matrix);
   GLint projection_view = glGetUniformLocation(program, "ProjectionView");
   glUniformMatrix4fv(projection_view, 1, GL_FALSE, (GLfloat *) &ProjectionView);
+
+  // Add position
+  GLint cam_position = glGetUniformLocation(program, "CamPosition");
+  glUniform3f(cam_position, player->position.x, player->position.y, player->position.z);
 
   // Enable face culling
   glEnable(GL_CULL_FACE);

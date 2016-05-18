@@ -282,13 +282,21 @@ void chunk_manager_process(chunk_manager *chunk_m, Player *player) {
   if (chunk_border_x != player->chunk_position.x ||
       chunk_border_z != player->chunk_position.z) {
 
-    if (chunk_m->number_of_loaded_chunks > 0) {
-      destroy_chunk(chunk_m->loaded_chunks[0]);
+    int found = 0;
+    for (int i = 0; i < chunk_m->number_of_loaded_chunks; i++) {
+      if (chunk_m->loaded_chunks[i]->x == player->chunk_position.x &&
+          chunk_m->loaded_chunks[i]->z == player->chunk_position.z) {
+        found = 1;
+        break;
+      }
     }
 
-    chunk_m->loaded_chunks[0] = create_chunk(player->chunk_position.x, player->chunk_position.z);
-    generate_chunk_mesh(chunk_m->loaded_chunks[0]);
-    chunk_m->number_of_loaded_chunks = 1;
+    if (found) return;
+
+    int currentIndex = chunk_m->number_of_loaded_chunks;
+    chunk_m->loaded_chunks[currentIndex] = create_chunk(player->chunk_position.x, player->chunk_position.z);
+    generate_chunk_mesh(chunk_m->loaded_chunks[currentIndex]);
+    chunk_m->number_of_loaded_chunks++;
 
     chunk_border_x = player->chunk_position.x;
     chunk_border_z = player->chunk_position.z;
