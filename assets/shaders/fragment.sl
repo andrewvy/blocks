@@ -17,6 +17,6 @@ void main() {
   color = mix(
     fColor,
     tintColor,
-    0.5
+    0.35
   );
 }

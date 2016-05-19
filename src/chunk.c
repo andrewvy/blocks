@@ -22,8 +22,6 @@ chunk *create_chunk(GLfloat x, GLfloat z) {
 
   // FOR TESTING AIR BLOCKS.
   new_chunk->blocks[65355] = 0;
-  new_chunk->blocks[65335] = 0;
-  new_chunk->blocks[65305] = 0;
 
   new_chunk->x = x;
   new_chunk->z = z;

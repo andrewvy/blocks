@@ -19,9 +19,9 @@ Player *create_player() {
   player->horizontalAngle = 0.60f;
   player->verticalAngle = -0.15f;
 
-  player->position.x = 15;
-  player->position.y = 300;
-  player->position.z = 15;
+  player->position.x = 7;
+  player->position.y = 260;
+  player->position.z = 7;
 
   player->velocity.x = 0.0;
   player->velocity.y = 0.0;
@@ -63,14 +63,15 @@ void integrate_player(chunk_manager *chunk_m, Player *player, float deltaTime) {
   chunk *currentChunk = find_chunk_by_position(chunk_m, player->chunk_position.x, player->chunk_position.z);
 
   if (currentChunk != NULL) {
+
+    // Check for solid block underneath.
+    // (exception for when the player is jumping)
     if (feet_y < CHUNK_Y && player->state != PLAYER_JUMPING) {
       int block_index = index_from_block(
-        player->voxel_position.x,
+        (player->voxel_position.x + 0.5),
         feet_y,
-        player->voxel_position.z
+        (player->voxel_position.z + 0.5)
       );
-
-      printf("index: %2d\n", block_index);
 
       if (currentChunk->blocks[block_index] != 0 &&
           player->state != PLAYER_GROUNDED &&
@@ -158,9 +159,10 @@ void move_player(Player *player, GLenum key, float deltaTime) {
       player->velocity = v3_sub(player->velocity, scaled_direction);
       break;
     case GLFW_KEY_SPACE:
-      if (player->state == PLAYER_GROUNDED)
+      if (player->state == PLAYER_GROUNDED) {
         player->state = PLAYER_JUMPING;
         player->velocity = vec3(player->velocity.x, player->jumpHeight, player->velocity.z);
+      }
       break;
   }
 
