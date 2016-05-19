@@ -108,7 +108,6 @@ static float lineHeight = 0.0f;
 
 int render_init() {
   // Ensure we can capture the escape key being pressed below
-  glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
   glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // Dark blue background
@@ -288,21 +287,36 @@ void render_quit() {
   glfwTerminate();
 }
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
   if (key == GLFW_KEY_1 && action == GLFW_PRESS) BLOCKS_DEBUG = !BLOCKS_DEBUG;
 }
 
-static float mouseSpeed = 0.02f;
+static float sensitivity = 300;
+static uint8_t firstMouse = 1;
+static double lastXPos = 0;
+static double lastYPos = 0;
 
-void mouseInput(double time, float deltaTime) {
-  double xpos, ypos;
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+  if (firstMouse) {
+    lastXPos = xpos;
+    lastYPos = ypos;
+    firstMouse = 0;
+  }
 
-  glfwGetCursorPos(window, &xpos, &ypos);
-  glfwSetCursorPos(window, WINDOW_WIDTH/2, WINDOW_HEIGHT/2);
+  GLfloat xoffset = lastXPos - xpos;
+  GLfloat yoffset = lastYPos - ypos;
+  lastXPos = xpos;
+  lastYPos = ypos;
 
-  player->horizontalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_WIDTH/2 - floor(xpos)));
-  player->verticalAngle += mouseSpeed * deltaTime * ((float) (WINDOW_HEIGHT/2 - floor(ypos)));
+  player->horizontalAngle += xoffset / sensitivity;
+  player->verticalAngle += yoffset / sensitivity;
+
+  if (player->verticalAngle > PI/2) {
+    player->verticalAngle = PI/2;
+  } else if (player->verticalAngle < -PI/2) {
+    player->verticalAngle = -PI/2;
+  }
 }
 
 void keyInput(double time, float deltaTime) {
@@ -323,6 +337,7 @@ int main(void) {
   if (render_init() == -1) return -1;
 
   glfwSetKeyCallback(window, key_callback);
+  glfwSetCursorPosCallback(window, mouse_callback);
   glfwSwapInterval(1);
 
   currentTime = glfwGetTime();
@@ -331,6 +346,7 @@ int main(void) {
     double newTime = glfwGetTime();
     double frameTime = newTime - currentTime;
     currentTime = newTime;
+    glfwPollEvents();
 
     while (frameTime > 0.0) {
       float deltaTime = 0.0;
@@ -341,7 +357,6 @@ int main(void) {
         deltaTime = tickrate;
       }
 
-      mouseInput(ongoingTime, deltaTime);
       keyInput(ongoingTime, deltaTime);
       integrate_player(player, deltaTime);
 
@@ -351,7 +366,6 @@ int main(void) {
 
     chunk_manager_process(ChunkManager, player);
     render();
-    glfwPollEvents();
   }
 
   return 0;

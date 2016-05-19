@@ -13,7 +13,7 @@ Player *create_player() {
 
   player->cam = *create_camera();
 
-  player->speed = 10.0f;
+  player->speed = 50.0f;
   player->jumpHeight = 5.0f;
 
   player->horizontalAngle = 0.60f;
@@ -117,11 +117,8 @@ void move_player(Player *player, GLenum key, float deltaTime) {
     cos(player->horizontalAngle - 3.14f/2.0f)
   );
 
-  vec3_t scaled_direction = v3_muls(direction, deltaTime);
-  scaled_direction = v3_muls(scaled_direction, player->speed * 4);
-
-  vec3_t scaled_right = v3_muls(right, deltaTime);
-  scaled_right = v3_muls(scaled_right, player->speed * 4);
+  vec3_t scaled_direction = v3_muls(direction, player->speed * deltaTime);
+  vec3_t scaled_right = v3_muls(right, player->speed * deltaTime);
 
   switch (key) {
     case GLFW_KEY_A:
