@@ -14,7 +14,7 @@ Player *create_player() {
   player->cam = *create_camera();
 
   player->speed = 50.0f;
-  player->jumpHeight = 5.0f;
+  player->jumpHeight = 6.0f;
 
   player->horizontalAngle = 0.60f;
   player->verticalAngle = -0.15f;

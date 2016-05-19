@@ -321,11 +321,20 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
   player->horizontalAngle += xoffset / sensitivity;
   player->verticalAngle += yoffset / sensitivity;
 
+  // Lock vertical angle to max.
   if (player->verticalAngle > PI/2) {
     player->verticalAngle = PI/2;
   } else if (player->verticalAngle < -PI/2) {
     player->verticalAngle = -PI/2;
   }
+
+  // Wrap around the horizontalAngle if it goes beyond.
+  if (player->horizontalAngle > 2 * PI) {
+    player->horizontalAngle = 0;
+  } else if (player->horizontalAngle < 0) {
+    player->horizontalAngle = 2 * PI;
+  }
+
 }
 
 void keyInput(double time, float deltaTime) {
