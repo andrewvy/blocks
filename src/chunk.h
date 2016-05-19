@@ -25,6 +25,10 @@ void render_chunk(GLuint program, chunk *render_chunk);
 void debug_render_chunk(GLuint program, chunk *render_chunk);
 int destroy_chunk(chunk *render_chunk);
 
+int index_from_block(uint16_t x, uint16_t y, uint16_t z);
+
+chunk *find_chunk_by_position(chunk_manager *chunk_m, float x, float z);
+
 chunk_manager *create_chunk_manager();
 void chunk_manager_process(chunk_manager *cm, Player *player);
 void destroy_chunk_manager(chunk_manager *cm);

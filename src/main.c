@@ -8,6 +8,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "common.h"
 #include "gl.h"
 #include "modern.h"
 #include "camera.h"
@@ -134,6 +135,7 @@ int render_init() {
 
   // Create Chunk Manager
   ChunkManager = create_chunk_manager();
+  chunk_manager_process(ChunkManager, player);
 
   // Set Projection matrix to perspective, with 1 rad FoV
   Projection = m4_perspective(80.0f, width / height, 0.1f, 200.0f);

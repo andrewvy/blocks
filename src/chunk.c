@@ -238,7 +238,7 @@ uint8_t block_from_index(chunk *render_chunk, uint32_t index) {
   return 0;
 }
 
-uint32_t index_from_block(uint16_t x, uint16_t y, uint16_t z) {
+int index_from_block(uint16_t x, uint16_t y, uint16_t z) {
   uint32_t x_length = CHUNK_X;
   uint32_t z_length = CHUNK_Z;
   uint32_t y_length = CHUNK_Y;
@@ -247,7 +247,8 @@ uint32_t index_from_block(uint16_t x, uint16_t y, uint16_t z) {
   if (y > y_length) y = y_length;
   if (z > z_length) z = z_length;
 
-  uint32_t index = (y * x_length * z_length) + (z * x_length) + x;
+  int index = (y * x_length * z_length) + (z * x_length) + x;
+
   return index;
 }
 
@@ -276,8 +277,8 @@ void destroy_chunk_manager(chunk_manager *cm) {
   free(cm);
 }
 
-static float chunk_border_x = 0;
-static float chunk_border_z = 0;
+static float chunk_border_x = 10;
+static float chunk_border_z = 10;
 
 chunk *find_chunk_by_position(chunk_manager *chunk_m, float x, float z) {
   chunk *found = NULL;

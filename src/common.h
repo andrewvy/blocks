@@ -1,5 +1,7 @@
 #pragma once
 
+#include "third-party/math_3d.h"
+
 typedef struct {
   GLuint vao_id;
 
@@ -19,6 +21,7 @@ typedef struct {
 
 typedef enum {
   PLAYER_GROUNDED,
+  PLAYER_JUMPING,
   PLAYER_AIRBORNE
 } PlayerState;
 
@@ -28,12 +31,12 @@ typedef struct {
   float speed; // Fixed movement speed
   vec3_t velocity;
   float jumpHeight; // Fixed jump height
+  vec3_t voxel_position;
 
   camera cam;
   float horizontalAngle;
   float verticalAngle;
 
-  vec3_t voxel_position;
   vec3_t chunk_position;
 } Player;
 

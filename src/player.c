@@ -20,7 +20,7 @@ Player *create_player() {
   player->verticalAngle = -0.15f;
 
   player->position.x = 15;
-  player->position.y = 260;
+  player->position.y = 300;
   player->position.z = 15;
 
   player->velocity.x = 0.0;
@@ -32,7 +32,7 @@ Player *create_player() {
   player->chunk_position.z = 0;
 
   player->voxel_position.x = 0;
-  player->voxel_position.y = 0;
+  player->voxel_position.y = 257;
   player->voxel_position.z = 0;
 
   return player;
@@ -58,31 +58,51 @@ void integrate_player(chunk_manager *chunk_m, Player *player, float deltaTime) {
   vec3_t acceleration = vec3(0, -15.0, 0);
   float friction = 0.94;
 
-  player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
+  // Check if voxel underneath player is solid.
+  float feet_y = player->voxel_position.y - 1;
+  chunk *currentChunk = find_chunk_by_position(chunk_m, player->chunk_position.x, player->chunk_position.z);
+
+  if (currentChunk != NULL) {
+    if (feet_y < CHUNK_Y && player->state != PLAYER_JUMPING) {
+      int block_index = index_from_block(
+        player->voxel_position.x,
+        feet_y,
+        player->voxel_position.z
+      );
+
+      printf("index: %2d\n", block_index);
+
+      if (currentChunk->blocks[block_index] != 0 &&
+          player->state != PLAYER_GROUNDED &&
+          player->velocity.y < 0) {
+        player->state = PLAYER_GROUNDED;
+        player->position.y = round(player->position.y) - 0.001;
+      } else if (player->state == PLAYER_GROUNDED) {
+        player->state = PLAYER_AIRBORNE;
+      }
+
+    } else if (player->state != PLAYER_AIRBORNE) {
+      player->state = PLAYER_AIRBORNE;
+    }
+  }
+
+  if (player->state == PLAYER_GROUNDED) {
+    player->velocity = vec3(player->velocity.x * friction, 0, player->velocity.z * friction);
+  } else {
+    player->state = PLAYER_AIRBORNE;
+    player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
+  }
 
   player->position = v3_add(player->position,
-    v3_add(
-      v3_muls(
-        player->velocity,
-        deltaTime
-      ),
-      v3_muls(
-        acceleration,
-        (deltaTime * deltaTime)
-      )
+    v3_muls(
+      player->velocity,
+      deltaTime
     )
   );
 
-  if (player->position.y <= 257) {
-    player->velocity = vec3(player->velocity.x, 0.0, player->velocity.z);
-    player->position.y = 257;
-    player->state = PLAYER_GROUNDED;
-  } else {
-    player->state = PLAYER_AIRBORNE;
+  if (player->state != PLAYER_GROUNDED) {
+    player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
   }
-
-  player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
-  player->state == PLAYER_GROUNDED ? player->velocity.y = 0.0 : player->velocity.y;
 }
 
 void recalculate_player(Player *player) {
@@ -139,7 +159,8 @@ void move_player(Player *player, GLenum key, float deltaTime) {
       break;
     case GLFW_KEY_SPACE:
       if (player->state == PLAYER_GROUNDED)
-        player->velocity = vec3(player->velocity.x, player->velocity.y + (player->jumpHeight * 1.5), player->velocity.z);
+        player->state = PLAYER_JUMPING;
+        player->velocity = vec3(player->velocity.x, player->jumpHeight, player->velocity.z);
       break;
   }
 
