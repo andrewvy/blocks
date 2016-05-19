@@ -185,6 +185,7 @@ void render_gui() {
   char gui_player_look[256];
   char gui_player_velocity[256];
   char gui_chunk_position[256];
+  char gui_voxel_position[256];
 
   sprintf(gui_vertex_count, "Vertex Count: %2d", vertex_count);
   gui_vertex_count[255] = '\0';
@@ -201,6 +202,9 @@ void render_gui() {
   sprintf(gui_chunk_position, "Chunk Position <x: %2.2f, z: %2.2f>", player->chunk_position.x, player->chunk_position.z);
   gui_player_position[255] = '\0';
 
+  sprintf(gui_voxel_position, "Voxel Position <x: %2.2f, y: %2.2f, z: %2.2f>", player->voxel_position.x, player->voxel_position.y, player->voxel_position.z);
+  gui_voxel_position[255] = '\0';
+
   fonsSetColor(fontcontext, gl3fonsRGBA(0, 0, 0, 255)); // white
 
   fonsDrawText(fontcontext, 10.0f, 10.0f, gui_title, NULL);
@@ -209,11 +213,12 @@ void render_gui() {
   fonsDrawText(fontcontext, 10.0f, 55.0f, gui_player_look, NULL);
   fonsDrawText(fontcontext, 10.0f, 70.0f, gui_player_velocity, NULL);
   fonsDrawText(fontcontext, 10.0f, 85.0f, gui_chunk_position, NULL);
+  fonsDrawText(fontcontext, 10.0f, 100.0f, gui_voxel_position, NULL);
 
   if (BLOCKS_DEBUG) {
     char gui_debug_mode[] = "DEBUG MODE ON";
     fonsSetColor(fontcontext, gl3fonsRGBA(250, 85, 85, 255));
-    fonsDrawText(fontcontext, 10.0f, 100.0f, gui_debug_mode, NULL);
+    fonsDrawText(fontcontext, 10.0f, 115.0f, gui_debug_mode, NULL);
   }
 }
 
@@ -226,6 +231,8 @@ void render() {
 
   // Calculate camera and set View uniform.
   recalculate_player(player);
+  set_player_position(ChunkManager, player);
+
   mat4_t ProjectionView = m4_mul(Projection, player->cam.matrix);
   GLint projection_view = glGetUniformLocation(program, "ProjectionView");
   glUniformMatrix4fv(projection_view, 1, GL_FALSE, (GLfloat *) &ProjectionView);
@@ -358,7 +365,7 @@ int main(void) {
       }
 
       keyInput(ongoingTime, deltaTime);
-      integrate_player(player, deltaTime);
+      integrate_player(ChunkManager, player, deltaTime);
 
       frameTime -= deltaTime;
       ongoingTime += deltaTime;

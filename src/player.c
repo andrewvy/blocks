@@ -31,6 +31,10 @@ Player *create_player() {
   player->chunk_position.y = 0;
   player->chunk_position.z = 0;
 
+  player->voxel_position.x = 0;
+  player->voxel_position.y = 0;
+  player->voxel_position.z = 0;
+
   return player;
 }
 
@@ -50,7 +54,7 @@ static float oldHorizontalAngle = 0.0;
 static vec3_t oldPosition;
 static float oldSpeed = 0.0;
 
-void integrate_player(Player *player, float deltaTime) {
+void integrate_player(chunk_manager *chunk_m, Player *player, float deltaTime) {
   vec3_t acceleration = vec3(0, -15.0, 0);
   float friction = 0.94;
 

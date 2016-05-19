@@ -1,4 +1,5 @@
 #include <GLFW/glfw3.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -278,20 +279,25 @@ void destroy_chunk_manager(chunk_manager *cm) {
 static float chunk_border_x = 0;
 static float chunk_border_z = 0;
 
+chunk *find_chunk_by_position(chunk_manager *chunk_m, float x, float z) {
+  chunk *found = NULL;
+  for (int i = 0; i < chunk_m->number_of_loaded_chunks; i++) {
+    if (chunk_m->loaded_chunks[i]->x == x &&
+        chunk_m->loaded_chunks[i]->z == z) {
+      found = chunk_m->loaded_chunks[i];
+      break;
+    }
+  }
+
+  return found;
+}
+
 void chunk_manager_process(chunk_manager *chunk_m, Player *player) {
   if (chunk_border_x != player->chunk_position.x ||
       chunk_border_z != player->chunk_position.z) {
 
-    int found = 0;
-    for (int i = 0; i < chunk_m->number_of_loaded_chunks; i++) {
-      if (chunk_m->loaded_chunks[i]->x == player->chunk_position.x &&
-          chunk_m->loaded_chunks[i]->z == player->chunk_position.z) {
-        found = 1;
-        break;
-      }
-    }
-
-    if (found) return;
+    chunk *found_chunk = find_chunk_by_position(chunk_m, player->chunk_position.x, player->chunk_position.z);
+    if (found_chunk != NULL) return;
 
     int currentIndex = chunk_m->number_of_loaded_chunks;
     chunk_m->loaded_chunks[currentIndex] = create_chunk(player->chunk_position.x, player->chunk_position.z);
@@ -310,4 +316,10 @@ chunk_manager *create_chunk_manager() {
   chunk_m->loaded_chunks = calloc(1, sizeof(chunk *));
 
   return chunk_m;
+}
+
+void set_player_position(chunk_manager *chunk_m, Player *player) {
+  player->voxel_position.x = player->position.x - (player->chunk_position.x * CHUNK_X);
+  player->voxel_position.y = player->position.y;
+  player->voxel_position.z = player->position.z - (player->chunk_position.z * CHUNK_Z);
 }

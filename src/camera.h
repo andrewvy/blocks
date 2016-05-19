@@ -1,13 +1,7 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-
-typedef struct {
-  mat4_t matrix;
-
-  vec3_t center;
-  vec3_t up;
-} camera;
+#include "common.h"
 
 camera *create_camera();
 void destroy_camera(camera *cam);
