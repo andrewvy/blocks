@@ -189,7 +189,7 @@ void render_gui() {
   char gui_chunk_position[256];
   char gui_voxel_position[256];
 
-  sprintf(gui_vertex_count, "Vertex Count: %2d", vertex_count);
+  sprintf(gui_vertex_count, "Vertex Count: %2d - Loaded Chunks: %2d", vertex_count, ChunkManager->number_of_loaded_chunks);
   gui_vertex_count[255] = '\0';
 
   sprintf(gui_player_position, "Player Position <x: %2.2f, y: %2.2f, z: %2.2f>", player->position.x, player->position.y, player->position.z);
