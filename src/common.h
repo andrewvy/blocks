@@ -27,6 +27,8 @@ typedef enum {
 
 typedef struct {
   PlayerState state;
+  char isFloating;
+
   vec3_t position;
   float speed; // Fixed movement speed
   vec3_t velocity;

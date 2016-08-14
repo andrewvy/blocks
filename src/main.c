@@ -298,7 +298,10 @@ void render_quit() {
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) glfwSetWindowShouldClose(window, GL_TRUE);
-  if (key == GLFW_KEY_1 && action == GLFW_PRESS) BLOCKS_DEBUG = !BLOCKS_DEBUG;
+  if (key == GLFW_KEY_1 && action == GLFW_PRESS) {
+    BLOCKS_DEBUG = !BLOCKS_DEBUG;
+    player->isFloating = BLOCKS_DEBUG;
+  }
 }
 
 static float sensitivity = 300;

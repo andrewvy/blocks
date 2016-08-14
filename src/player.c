@@ -35,6 +35,8 @@ Player *create_player() {
   player->voxel_position.y = 257;
   player->voxel_position.z = 0;
 
+  player->isFloating = 0;
+
   return player;
 }
 
@@ -87,22 +89,27 @@ void integrate_player(chunk_manager *chunk_m, Player *player, float deltaTime) {
     }
   }
 
-  if (player->state == PLAYER_GROUNDED) {
-    player->velocity = vec3(player->velocity.x * friction, 0, player->velocity.z * friction);
-  } else {
-    player->state = PLAYER_AIRBORNE;
-    player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
-  }
+  // If in BLOCKS_DEBUG mode, player.isFloating is set to 1
+  // So we no longer want to apply any directional changes to the player
 
-  player->position = v3_add(player->position,
-    v3_muls(
-      player->velocity,
-      deltaTime
-    )
-  );
+  if (player->isFloating != 1) {
+    if (player->state == PLAYER_GROUNDED) {
+      player->velocity = vec3(player->velocity.x * friction, 0, player->velocity.z * friction);
+    } else {
+      player->state = PLAYER_AIRBORNE;
+      player->velocity = vec3(player->velocity.x * friction, player->velocity.y, player->velocity.z * friction);
+    }
 
-  if (player->state != PLAYER_GROUNDED) {
-    player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
+    player->position = v3_add(player->position,
+                              v3_muls(
+                                      player->velocity,
+                                      deltaTime
+                                      )
+                              );
+
+    if (player->state != PLAYER_GROUNDED) {
+      player->velocity = v3_add(player->velocity, v3_muls(acceleration, deltaTime));
+    }
   }
 }
 
@@ -145,32 +152,71 @@ void move_player(Player *player, GLenum key, float deltaTime) {
   vec3_t scaled_direction = v3_muls(direction, player->speed * deltaTime);
   vec3_t scaled_right = v3_muls(right, player->speed * deltaTime);
 
-  switch (key) {
-    case GLFW_KEY_A:
-      player->velocity = v3_sub(player->velocity, scaled_right);
-      break;
-    case GLFW_KEY_D:
-      player->velocity = v3_add(player->velocity, scaled_right);
-      break;
-    case GLFW_KEY_W:
-      player->velocity = v3_add(player->velocity, scaled_direction);
-      break;
-    case GLFW_KEY_S:
-      player->velocity = v3_sub(player->velocity, scaled_direction);
-      break;
-    case GLFW_KEY_SPACE:
-      if (player->state == PLAYER_GROUNDED) {
-        player->state = PLAYER_JUMPING;
-        player->velocity = vec3(player->velocity.x, player->jumpHeight, player->velocity.z);
-      }
-      break;
-  }
+  // If the player is not floating, perform normal velocity calculations.
+  // Else, we want to change to a floating camera mode.
+  if (player->isFloating != 1) {
+    switch (key) {
+      case GLFW_KEY_A:
+        player->velocity = v3_sub(player->velocity, scaled_right);
+        break;
+      case GLFW_KEY_D:
+        player->velocity = v3_add(player->velocity, scaled_right);
+        break;
+      case GLFW_KEY_W:
+        player->velocity = v3_add(player->velocity, scaled_direction);
+        break;
+      case GLFW_KEY_S:
+        player->velocity = v3_sub(player->velocity, scaled_direction);
+        break;
+      case GLFW_KEY_SPACE:
+        if (player->state == PLAYER_GROUNDED) {
+          player->state = PLAYER_JUMPING;
+          player->velocity = vec3(player->velocity.x, player->jumpHeight, player->velocity.z);
+        }
+        break;
+    }
 
-  if (player->velocity.x > player->speed) {
-    player->velocity.x = player->speed;
-  }
+    if (player->velocity.x > player->speed) {
+      player->velocity.x = player->speed;
+    }
 
-  if (player->velocity.z > player->speed) {
-    player->velocity.z = player->speed;
+    if (player->velocity.z > player->speed) {
+      player->velocity.z = player->speed;
+    }
+  } else {
+    // The player is now floating, so we switch to a
+    // more floating camera movement style.
+
+    vec3_t direction = vec3(
+                            cos(player->verticalAngle) * sin(player->horizontalAngle),
+                            sin(player->verticalAngle),
+                            cos(player->verticalAngle) * cos(player->horizontalAngle)
+                            );
+
+    vec3_t right = vec3(sin(player->horizontalAngle - 3.14f/2.0f),
+                        0,
+                        cos(player->horizontalAngle - 3.14f/2.0f)
+                        );
+
+    vec3_t scaled_direction = v3_muls(direction, deltaTime);
+    scaled_direction = v3_muls(scaled_direction, player->speed/2);
+
+    vec3_t scaled_right = v3_muls(right, deltaTime);
+    scaled_right = v3_muls(scaled_right, player->speed/2);
+
+    switch (key) {
+      case GLFW_KEY_A:
+        player->position = v3_sub(player->position, scaled_right);
+        break;
+      case GLFW_KEY_D:
+        player->position = v3_add(player->position, scaled_right);
+        break;
+      case GLFW_KEY_W:
+        player->position = v3_add(player->position, scaled_direction);
+        break;
+      case GLFW_KEY_S:
+        player->position = v3_sub(player->position, scaled_direction);
+        break;
+    }
   }
 }
